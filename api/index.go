@@ -2,9 +2,14 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.io/hashgraph/stable-coin/api/notification"
 	"github.io/hashgraph/stable-coin/api/routes"
+	"os"
 )
 
 func init() {
@@ -12,15 +17,26 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	log.Logger = log.Output(
+		zerolog.ConsoleWriter{
+			Out:     os.Stderr,
+			NoColor: false,
+		},
+	)
 }
 
 func main() {
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(logger.SetLogger())
+	r.Use(gin.Recovery())
 
 	// https://github.com/gin-contrib/cors
 	r.Use(cors.Default())
 
 	r.GET("/v1/token", routes.GetToken)
+	r.GET("/ws", notification.Handler)
 
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT
 	err := r.Run()
