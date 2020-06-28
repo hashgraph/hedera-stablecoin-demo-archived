@@ -18,12 +18,7 @@ func init() {
 		panic(err)
 	}
 
-	log.Logger = log.Output(
-		zerolog.ConsoleWriter{
-			Out:     os.Stderr,
-			NoColor: false,
-		},
-	)
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 }
 
 func main() {
@@ -36,6 +31,9 @@ func main() {
 	r.Use(cors.Default())
 
 	r.GET("/v1/token", routes.GetToken)
+	r.POST("/v1/token/join", routes.SendAnnounce)
+	r.GET("/v1/token/userExists/:username", routes.GetUserExists)
+	r.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
 	r.GET("/ws", notification.Handler)
 
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT

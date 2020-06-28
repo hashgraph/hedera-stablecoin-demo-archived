@@ -6,8 +6,13 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/hashgraph/hedera-sdk-go"
+	"github.com/joho/godotenv"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.io/hashgraph/stable-coin/mirror/api"
 	"github.io/hashgraph/stable-coin/mirror/operation"
 	"github.io/hashgraph/stable-coin/pb"
+	"os"
 	"strconv"
 	"time"
 )
@@ -27,14 +32,25 @@ var timeDivisor int64 = 1e7
 // TODO: Set from .env
 var adminPublicKey ed25519.PublicKey
 
-func main() {
-	mirrorClient, err := hedera.NewMirrorClient("hcs.testnet.mirrornode.hedera.com:5600")
-	// mirrorClient, err := hedera.NewMirrorClient("api.testnet.kabuto.sh:50211")
+func init() {
+	err := godotenv.Load()
 	if err != nil {
 		panic(err)
 	}
 
-	topicID, err := hedera.TopicIDFromString("0.0.75607")
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
+
+	// Uncomment for a lot more logging
+	zerolog.SetGlobalLevel(zerolog.TraceLevel)
+}
+
+func main() {
+	mirrorClient, err := hedera.NewMirrorClient(os.Getenv("HEDERA_MIRROR_NODE"))
+	if err != nil {
+		panic(err)
+	}
+
+	topicID, err := hedera.TopicIDFromString(os.Getenv("TOPIC_ID"))
 	if err != nil {
 		panic(err)
 	}
@@ -55,8 +71,8 @@ func main() {
 		panic(err)
 	}
 
-	// exit when the runtime is idle
-	select {}
+	// now that the mirror client is running in the background, proceed to run the mirror API
+	api.Run()
 }
 
 func handle(response hedera.MirrorConsensusTopicResponse) error {

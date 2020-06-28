@@ -1,7 +1,9 @@
 package operation
 
 import (
+	"encoding/hex"
 	"github.com/hashgraph/hedera-sdk-go"
+	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/mirror/state"
 	"github.io/hashgraph/stable-coin/pb"
 )
@@ -13,11 +15,20 @@ func Announce(payload *pb.Join) error {
 		return err
 	}
 
+	publicKeyHex := hex.EncodeToString(publicKey.Bytes())
+
+	log.Trace().
+		Str("username", payload.Username).
+		Str("key", publicKeyHex).
+		Msg("Announce")
+
 	// TODO: Handle "user already exists"
 	// TODO: Handle recording the operation
 	// TODO: Handle response to the UI
 
-	state.Users[payload.Username] = publicKey.Bytes()
+	state.User[payload.Username] = publicKey.Bytes()
+	state.Address[publicKeyHex] = payload.Username
+	state.Balance[payload.Username] = 0
 
 	return nil
 }
