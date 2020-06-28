@@ -27,6 +27,7 @@ var blockTPS float64 = 0
 var avgTPS float64 = 0
 var timeMultiplier int64 = 100
 var timeDivisor int64 = 1e7
+
 // ----------------------------
 
 // TODO: Set from .env
@@ -84,9 +85,9 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 	}
 
 	handleCount = handleCount + 1
-	if handleCount % modulo == 0 {
-		runTime := time.Now().Round(time.Millisecond).UnixNano() / timeDivisor - startTime
-		blockTime := time.Now().Round(time.Millisecond).UnixNano() / timeDivisor - blockStartTime
+	if handleCount%modulo == 0 {
+		runTime := time.Now().Round(time.Millisecond).UnixNano()/timeDivisor - startTime
+		blockTime := time.Now().Round(time.Millisecond).UnixNano()/timeDivisor - blockStartTime
 		blockStartTime = time.Now().Round(time.Millisecond).UnixNano() / timeDivisor
 		blockTPS = 0
 		avgTPS = 0
@@ -97,11 +98,11 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 			avgTPS = float64(timeMultiplier) * float64(handleCount) / float64(runTime)
 		}
 		fmt.Printf("%.1f,%d,%.0f,%.0f,%.1f\n",
-			float64(runTime) / float64(timeMultiplier),
+			float64(runTime)/float64(timeMultiplier),
 			handleCount,
 			avgTPS,
 			blockTPS,
-			float64(blockTime) / float64(timeMultiplier))
+			float64(blockTime)/float64(timeMultiplier))
 	}
 
 	// ----------------------------
@@ -123,6 +124,16 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		//}
 
 		err = operation.Announce(v)
+
+	case *pb.Primitive_MintTo:
+		v := primitive.GetMintTo()
+
+		//err = verify(primitive.Header, v)
+		//if err != nil {
+		//	return err
+		//}
+
+		err = operation.Mint(v)
 
 	default:
 		err = fmt.Errorf("unimplemented operation: %T", primitive.Primitive)

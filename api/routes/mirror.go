@@ -31,3 +31,11 @@ func GetUserExists(c *gin.Context) {
 func GetUserBalanceByAddress(c *gin.Context) {
 	proxy.ServeHTTP(c.Writer, c.Request)
 }
+
+func GetUserOperationsByUsername(c *gin.Context) {
+	proxy.ServeHTTP(c.Writer, c.Request)
+}
+
+func GetOtherUsersByAddress(c *gin.Context) {
+	proxy.ServeHTTP(c.Writer, c.Request)
+}

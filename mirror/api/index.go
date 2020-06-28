@@ -15,6 +15,8 @@ func Run() {
 
 	r.GET("/v1/token/userExists/:username", routes.GetUserExists)
 	r.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
+	r.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
+	r.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
 
 	err := r.Run(":" + os.Getenv("MIRROR_PORT"))
 	if err != nil {
