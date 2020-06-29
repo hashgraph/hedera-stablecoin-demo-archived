@@ -12,7 +12,20 @@ WHERE public_key = $1
 	return balance, frozen, err
 }
 
-func UpdateUserBalance(userName string, newBalance uint64) error {
-	_, err := db.Exec("UPDATE address SET balance = $1 WHERE username = $2", newBalance, userName)
-	return err
+func UpdateUserBalances(balances map[string]uint64) error {
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	for userName, newBalance := range balances {
+		_, err := tx.Exec("UPDATE address SET balance = $1 WHERE username = $2", newBalance, userName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

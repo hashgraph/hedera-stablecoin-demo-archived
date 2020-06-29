@@ -38,11 +38,9 @@ func commit() {
 		pendingNewUser = nil
 
 		// insert the new user records
-		for _, userName := range users {
-			err := data.InsertNewAddress(userName, User[userName])
-			if err != nil {
-				panic(err)
-			}
+		err := data.InsertNewAddresses(users, User)
+		if err != nil {
+			panic(err)
 		}
 	}
 
@@ -56,11 +54,9 @@ func commit() {
 		pendingOperationsForUser = map[string][]domain.Operation{}
 
 		// iterate and insert all the new operations
-		for _, op := range operations {
-			err := data.InsertOperation(op)
-			if err != nil {
-				panic(err)
-			}
+		err := data.InsertOperations(operations)
+		if err != nil {
+			panic(err)
 		}
 	}
 
@@ -73,11 +69,9 @@ func commit() {
 		pendingBalances = map[string]uint64{}
 
 		// update the balance records
-		for userName, newBalance := range balances {
-			err := data.UpdateUserBalance(userName, newBalance)
-			if err != nil {
-				panic(err)
-			}
+		err := data.UpdateUserBalances(balances)
+		if err != nil {
+			panic(err)
 		}
 	}
 

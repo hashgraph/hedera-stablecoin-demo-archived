@@ -1,6 +1,9 @@
 package data
 
 import (
+	"context"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.io/hashgraph/stable-coin/domain"
 	"time"
 )
@@ -27,21 +30,45 @@ func GetLatestOperationConsensus() (time.Time, error) {
 	return time.Unix(0, consensusNanos), err
 }
 
-func InsertOperation(op domain.Operation) error {
-	_, err := db.Exec(`
-INSERT INTO operation (
-   consensus,
-   "operation",
-   signature,
-   from_address,
-   to_address,
-   amount,
-   status,
-   status_message
-) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8
-)
-	`, op.Consensus, op.Operation, op.Signature, op.FromAddress, op.ToAddress, op.Amount, op.Status, op.StatusMessage)
+func InsertOperations(operations []domain.Operation) error {
+	var rows = make([][]interface{}, 0, len(operations))
+
+	for _, op := range operations {
+		rows = append(rows, []interface{}{
+			op.Consensus,
+			string(op.Operation),
+			op.Signature,
+			op.FromAddress,
+			op.ToAddress,
+			op.Amount,
+			string(op.Status),
+			op.StatusMessage,
+		})
+	}
+
+	conn, err := stdlib.AcquireConn(db.DB)
+
+	defer func() {
+		err := stdlib.ReleaseConn(db.DB, conn)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.CopyFrom(context.Background(), pgx.Identifier{"operation"}, []string{
+		"consensus",
+		"operation",
+		"signature",
+		"from_address",
+		"to_address",
+		"amount",
+		"status",
+		"status_message",
+	}, pgx.CopyFromRows(rows))
 
 	return err
 }
