@@ -1,7 +1,6 @@
 package operation
 
 import (
-	"crypto/ed25519"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/domain"
@@ -32,7 +31,7 @@ func Mint(payload *pb.MintTo) (domain.Operation, error) {
 	})
 
 	userPublicKey, _ := state.User.Load(payload.Address)
-	userPublicKeyBytes := []byte(userPublicKey.(ed25519.PublicKey))
+	userPublicKeyBytes := userPublicKey.([]byte)
 
 	return domain.Operation{
 		Operation: domain.OpMint,
