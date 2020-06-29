@@ -21,8 +21,8 @@ func GetUserBalanceByAddress(c *gin.Context) {
 
 	publicKeyHex := hex.EncodeToString(hederaPublicKey.Bytes())
 
-	if username, ok := state.Address[publicKeyHex]; ok {
-		if balance, ok := state.Balance[username]; ok {
+	if username, ok := state.Address.Load(publicKeyHex); ok {
+		if balance, ok := state.Balance.Load(username); ok {
 			c.JSON(http.StatusOK, gin.H{
 				"balance": balance,
 			})

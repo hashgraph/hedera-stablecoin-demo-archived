@@ -1,6 +1,7 @@
 package operation
 
 import (
+	"crypto/ed25519"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/domain"
@@ -14,7 +15,7 @@ func Mint(payload *pb.MintTo) (domain.Operation, error) {
 		Uint64("quantity", payload.Quantity).
 		Msg("Mint")
 
-	if _, exists := state.Balance[payload.Address]; !exists {
+	if _, exists := state.Balance.Load(payload.Address); !exists {
 		return domain.Operation{
 			Operation:     domain.OpMint,
 			Status:        domain.OpStatusFailed,
@@ -30,12 +31,13 @@ func Mint(payload *pb.MintTo) (domain.Operation, error) {
 		return balance + payload.Quantity
 	})
 
-	userPublicKey := []byte(state.User[payload.Address])
+	userPublicKey, _ := state.User.Load(payload.Address)
+	userPublicKeyBytes := []byte(userPublicKey.(ed25519.PublicKey))
 
 	return domain.Operation{
 		Operation: domain.OpMint,
 		Status:    domain.OpStatusComplete,
-		ToAddress: &userPublicKey,
+		ToAddress: &userPublicKeyBytes,
 		Amount:    int64(payload.Quantity),
 	}, nil
 }

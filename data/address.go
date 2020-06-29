@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.io/hashgraph/stable-coin/domain"
+	"sync"
 )
 
 func GetAllAddress() ([]domain.Address, error) {
@@ -15,13 +16,15 @@ func GetAllAddress() ([]domain.Address, error) {
 	return r, err
 }
 
-func InsertNewAddresses(newUsers []string, userToAddress map[string]ed25519.PublicKey) error {
+func InsertNewAddresses(newUsers []string, userToAddress *sync.Map) error {
 	var rows = make([][]interface{}, 0, len(newUsers))
 
 	for _, newUser := range newUsers {
+		address, _ := userToAddress.Load(newUser)
+
 		rows = append(rows, []interface{}{
 			newUser,
-			userToAddress[newUser],
+			address.(ed25519.PublicKey),
 		})
 	}
 

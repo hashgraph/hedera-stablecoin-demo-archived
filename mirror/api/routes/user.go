@@ -9,7 +9,7 @@ import (
 )
 
 func GetOtherUsersByAddress(c *gin.Context) {
-	userNames := make([]string, 0, len(state.User))
+	userNames := []string{}
 
 	// FIXME: This should be by username
 	hederaPublicKey, err := hedera.Ed25519PublicKeyFromString(c.Param("address"))
@@ -19,11 +19,16 @@ func GetOtherUsersByAddress(c *gin.Context) {
 
 	excludeAddress := hex.EncodeToString(hederaPublicKey.Bytes())
 
-	for address, userName := range state.Address {
+	state.Address.Range(func(addressI, userNameI interface{}) bool {
+		address := addressI.(string)
+		userName := userNameI.(string)
+
 		if excludeAddress != address {
 			userNames = append(userNames, userName)
 		}
-	}
+
+		return true
+	})
 
 	c.JSON(http.StatusOK, userNames)
 }

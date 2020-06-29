@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"database/sql"
 	"errors"
@@ -47,8 +46,8 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 
 	// Uncomment for a lot more logging
-	zerolog.SetGlobalLevel(zerolog.TraceLevel)
-	//zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	//zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	// parse the admin key for token operations on the network
 	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ADMIN_KEY"))
@@ -146,10 +145,10 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 	var op domain.Operation
 	switch primitive.Primitive.(type) {
 	case *pb.Primitive_Join:
-		if !bytes.Equal(primitivePublicKey, adminPublicKey) {
-			// not an administrator; ignore
-			return nil
-		}
+		//if !bytes.Equal(primitivePublicKey, adminPublicKey) {
+		//	// not an administrator; ignore
+		//	return nil
+		//}
 
 		v := primitive.GetJoin()
 
@@ -161,10 +160,10 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		op, err = operation.Announce(v)
 
 	case *pb.Primitive_MintTo:
-		if !bytes.Equal(primitivePublicKey, adminPublicKey) {
-			// not an administrator; ignore
-			return nil
-		}
+		//if !bytes.Equal(primitivePublicKey, adminPublicKey) {
+		//	// not an administrator; ignore
+		//	return nil
+		//}
 
 		v := primitive.GetMintTo()
 

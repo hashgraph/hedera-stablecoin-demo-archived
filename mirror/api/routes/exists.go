@@ -13,7 +13,7 @@ func GetUserExists(c *gin.Context) {
 	username := c.Param("username")
 	var exists = true
 
-	if _, ok := state.User[username]; !ok {
+	if _, ok := state.User.Load(username); !ok {
 		exists, err = data.GetUserExists(username)
 		if err != nil {
 			panic(err)

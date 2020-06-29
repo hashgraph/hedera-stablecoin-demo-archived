@@ -1,6 +1,7 @@
 package operation
 
 import (
+	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
 	"github.com/rs/zerolog/log"
@@ -16,11 +17,11 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 		Uint64("quantity", payload.Quantity).
 		Msg("Transfer")
 
-	var senderUserName string
+	var senderUserNameI interface{}
 	var exists bool
 	senderAddressHex := hex.EncodeToString(senderAddress)
 
-	if senderUserName, exists = state.Address[senderAddressHex]; !exists {
+	if senderUserNameI, exists = state.Address.Load(senderAddressHex); !exists {
 		return domain.Operation{
 			Operation:     domain.OpTransfer,
 			Status:        domain.OpStatusFailed,
@@ -29,7 +30,9 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 		}, nil
 	}
 
-	if _, exists = state.Balance[payload.ToAddress]; !exists {
+	senderUserName := senderUserNameI.(string)
+
+	if _, exists = state.Balance.Load(payload.ToAddress); !exists {
 		return domain.Operation{
 			Operation:     domain.OpTransfer,
 			Status:        domain.OpStatusFailed,
@@ -38,8 +41,11 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 		}, nil
 	}
 
-	toAddress := []byte(state.User[payload.ToAddress])
-	senderBalance := state.Balance[senderUserName]
+	toAddressI, _ := state.User.Load(payload.ToAddress)
+	toAddress := []byte(toAddressI.(ed25519.PublicKey))
+
+	senderBalanceI, _ := state.Balance.Load(senderUserName)
+	senderBalance := senderBalanceI.(uint64)
 
 	if senderBalance < payload.Quantity {
 		return domain.Operation{

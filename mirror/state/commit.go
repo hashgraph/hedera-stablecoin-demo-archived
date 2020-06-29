@@ -38,7 +38,7 @@ func commit() {
 		pendingNewUser = nil
 
 		// insert the new user records
-		err := data.InsertNewAddresses(users, User)
+		err := data.InsertNewAddresses(users, &User)
 		if err != nil {
 			panic(err)
 		}

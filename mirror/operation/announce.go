@@ -26,7 +26,7 @@ func Announce(payload *pb.Join) (domain.Operation, error) {
 
 	// TODO: Handle response to the UI
 
-	if _, exists := state.User[payload.Username]; exists {
+	if _, exists := state.User.Load(payload.Username); exists {
 		// duplicate user name
 		return domain.Operation{
 			Operation:     domain.OpAnnounce,
@@ -35,7 +35,7 @@ func Announce(payload *pb.Join) (domain.Operation, error) {
 		}, nil
 	}
 
-	if _, exists := state.Address[publicKeyHex]; exists {
+	if _, exists := state.Address.Load(publicKeyHex); exists {
 		// duplicate public key
 		return domain.Operation{
 			Operation:     domain.OpAnnounce,
