@@ -3,7 +3,6 @@ package state
 import (
 	"crypto/ed25519"
 	"encoding/hex"
-	"fmt"
 	"github.io/hashgraph/stable-coin/data"
 	"github.io/hashgraph/stable-coin/domain"
 	"sync"
@@ -37,18 +36,16 @@ func init() {
 		panic(err)
 	}
 
-	fmt.Printf("address? %v\n")
-
 	for _, row := range addressRows {
 		Balance.Store(row.Username, uint64(row.Balance))
-		User.Store(row.Username, row.PublicKey)
+		User.Store(row.Username, ed25519.PublicKey(row.PublicKey))
 		Address.Store(hex.EncodeToString(row.PublicKey), row.Username)
 	}
 }
 
 // AddUser adds a new user
 func AddUser(username string, publicKey ed25519.PublicKey) {
-	Balance.Store(username, 0)
+	Balance.Store(username, uint64(0))
 	User.Store(username, publicKey)
 	Address.Store(hex.EncodeToString(publicKey), username)
 
