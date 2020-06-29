@@ -16,7 +16,7 @@ func Mint(payload *pb.MintTo) (domain.Operation, error) {
 
 	if _, exists := state.Balance[payload.Address]; !exists {
 		return domain.Operation{
-			Operation:     domain.OpAnnounce,
+			Operation:     domain.OpMint,
 			Status:        domain.OpStatusFailed,
 			StatusMessage: fmt.Sprintf("user `%s` does not exist", payload.Address),
 		}, nil

@@ -10,8 +10,8 @@ func GetOperationsForUsername(username string) ([]domain.Operation, error) {
 	err := db.Select(&operations, `
 SELECT operation.*, from_address.username as from_username, to_address.username as to_username
 FROM operation
-INNER JOIN address from_address ON from_address.public_key = operation.from_address
-INNER JOIN address to_address ON to_address.public_key = operation.to_address
+LEFT JOIN address from_address ON from_address.public_key = operation.from_address
+LEFT JOIN address to_address ON to_address.public_key = operation.to_address
 WHERE from_address.username = $1 
    OR to_address.username = $1
 ORDER BY operation.consensus DESC

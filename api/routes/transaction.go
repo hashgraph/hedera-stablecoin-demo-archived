@@ -4,8 +4,10 @@ import (
 	"crypto"
 	"crypto/ed25519"
 	crand "crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
 	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/joho/godotenv"
@@ -14,6 +16,7 @@ import (
 	"github.io/hashgraph/stable-coin/pb"
 	"io/ioutil"
 	mrand "math/rand"
+	"net/http"
 	"os"
 	"strconv"
 )
@@ -96,6 +99,32 @@ func init() {
 			panic(err)
 		}
 	}
+}
+
+func SendRawTransaction(c *gin.Context) {
+	var req struct {
+		Primitive string `json:"primitive"`
+	}
+
+	err := c.BindJSON(&req)
+	if err != nil {
+		return
+	}
+
+	primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
+	if err != nil {
+		panic(err)
+	}
+
+	err = sendRaw(primitive)
+	if err != nil {
+		panic(err)
+	}
+
+	c.JSON(http.StatusAccepted, transactionResponse{
+		Status:  true,
+		Message: "raw transaction request sent",
+	})
 }
 
 func sendTransaction(v proto.Message, p *pb.Primitive) {

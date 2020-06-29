@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"database/sql"
 	"errors"
@@ -135,12 +136,24 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		return err
 	}
 
+	primitiveHederaPublicKey, err := hedera.Ed25519PublicKeyFromString(primitive.Header.PublicKey)
+	if err != nil {
+		return err
+	}
+
+	primitivePublicKey := ed25519.PublicKey(primitiveHederaPublicKey.Bytes())
+
 	var op domain.Operation
 	switch primitive.Primitive.(type) {
 	case *pb.Primitive_Join:
+		if !bytes.Equal(primitivePublicKey, adminPublicKey) {
+			// not an administrator; ignore
+			return nil
+		}
+
 		v := primitive.GetJoin()
 
-		err = verify(primitive.Header, v)
+		err = verify(primitive.Header, v, primitivePublicKey)
 		if err != nil {
 			return err
 		}
@@ -148,17 +161,29 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		op, err = operation.Announce(v)
 
 	case *pb.Primitive_MintTo:
+		if !bytes.Equal(primitivePublicKey, adminPublicKey) {
+			// not an administrator; ignore
+			return nil
+		}
+
 		v := primitive.GetMintTo()
 
-		err = verify(primitive.Header, v)
+		err = verify(primitive.Header, v, primitivePublicKey)
 		if err != nil {
 			return err
 		}
 
 		op, err = operation.Mint(v)
 
-	//case *pb.Primitive_Transfer:
-	//	pass
+	case *pb.Primitive_Transfer:
+		v := primitive.GetTransfer()
+
+		err = verify(primitive.Header, v, primitivePublicKey)
+		if err != nil {
+			return err
+		}
+
+		op, err = operation.Transfer(primitivePublicKey, v)
 
 	default:
 		err = fmt.Errorf("unimplemented operation: %T", primitive.Primitive)
@@ -176,7 +201,7 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 	return nil
 }
 
-func verify(header *pb.PrimitiveHeader, v proto.Message) error {
+func verify(header *pb.PrimitiveHeader, v proto.Message, publicKey ed25519.PublicKey) error {
 	message, err := proto.Marshal(v)
 	if err != nil {
 		return err
@@ -187,7 +212,7 @@ func verify(header *pb.PrimitiveHeader, v proto.Message) error {
 
 	message = append(message, nonceBytes...)
 
-	verified := ed25519.Verify(adminPublicKey, message, header.Signature)
+	verified := ed25519.Verify(publicKey, message, header.Signature)
 
 	if !verified {
 		return errors.New("invalid signature")

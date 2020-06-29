@@ -31,12 +31,15 @@ func main() {
 	r.Use(cors.Default())
 
 	r.GET("/v1/token", routes.GetToken)
-	r.POST("/v1/token/join", routes.SendAnnounce)
-	r.POST("/v1/token/mintTo", routes.SendMint)
 	r.GET("/v1/token/userExists/:username", routes.GetUserExists)
 	r.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
 	r.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
 	r.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
+
+	r.POST("/v1/token/join", routes.SendAnnounce)
+	r.POST("/v1/token/mintTo", routes.SendMint)
+	r.POST("/v1/token/transaction", routes.SendRawTransaction)
+
 	r.GET("/ws", notification.Handler)
 
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT
