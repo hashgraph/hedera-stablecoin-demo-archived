@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/ed25519"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
@@ -9,8 +10,11 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.io/hashgraph/stable-coin/data"
+	"github.io/hashgraph/stable-coin/domain"
 	"github.io/hashgraph/stable-coin/mirror/api"
 	"github.io/hashgraph/stable-coin/mirror/operation"
+	"github.io/hashgraph/stable-coin/mirror/state"
 	"github.io/hashgraph/stable-coin/pb"
 	"os"
 	"strconv"
@@ -65,9 +69,17 @@ func main() {
 		panic(err)
 	}
 
+	startTime, err := data.GetLatestOperationConsensus()
+
+	if err == sql.ErrNoRows {
+		startTime = time.Unix(0, 0)
+	} else if err != nil {
+		panic(err)
+	}
+
 	_, err = hedera.NewMirrorConsensusTopicQuery().
 		SetTopicID(topicID).
-		SetStartTime(time.Unix(0, 0)).
+		SetStartTime(startTime.Add(1 * time.Second)).
 		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
 			err := handle(response)
 			if err != nil {
@@ -123,6 +135,7 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		return err
 	}
 
+	var op domain.Operation
 	switch primitive.Primitive.(type) {
 	case *pb.Primitive_Join:
 		v := primitive.GetJoin()
@@ -132,7 +145,7 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 			return err
 		}
 
-		err = operation.Announce(v)
+		op, err = operation.Announce(v)
 
 	case *pb.Primitive_MintTo:
 		v := primitive.GetMintTo()
@@ -142,7 +155,10 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 			return err
 		}
 
-		err = operation.Mint(v)
+		op, err = operation.Mint(v)
+
+	//case *pb.Primitive_Transfer:
+	//	pass
 
 	default:
 		err = fmt.Errorf("unimplemented operation: %T", primitive.Primitive)
@@ -151,6 +167,11 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 	if err != nil {
 		return err
 	}
+
+	op.Signature = primitive.Header.Signature
+	op.Consensus = response.ConsensusTimeStamp.UnixNano()
+
+	state.AddOperation(op)
 
 	return nil
 }

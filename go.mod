@@ -12,8 +12,8 @@ require (
 	github.com/golang/protobuf v1.4.0-rc.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashgraph/hedera-sdk-go v0.7.0
-	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v4 v4.7.0
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/rs/zerolog v1.19.0
 	google.golang.org/protobuf v1.20.1

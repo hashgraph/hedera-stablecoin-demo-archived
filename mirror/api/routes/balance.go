@@ -1,10 +1,10 @@
 package routes
 
 import (
+	"database/sql"
 	"encoding/hex"
 	"github.com/gin-gonic/gin"
 	"github.com/hashgraph/hedera-sdk-go"
-	"github.com/jackc/pgx/v4"
 	"github.io/hashgraph/stable-coin/data"
 	"github.io/hashgraph/stable-coin/mirror/state"
 	"net/http"
@@ -32,7 +32,7 @@ func GetUserBalanceByAddress(c *gin.Context) {
 	}
 
 	balance, _, err := data.GetUserBalanceByAddress(hederaPublicKey.Bytes())
-	if err == pgx.ErrNoRows {
+	if err == sql.ErrNoRows {
 		balance = 0
 	} else if err != nil {
 		panic(err)

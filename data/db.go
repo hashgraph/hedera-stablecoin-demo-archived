@@ -1,18 +1,16 @@
 package data
 
 import (
-	"context"
-	"database/sql"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	"os"
 )
 
-var db *pgxpool.Pool
+var db *sqlx.DB
 
 func init() {
 	err := godotenv.Load()
@@ -20,10 +18,7 @@ func init() {
 		panic(err)
 	}
 
-	db, err = pgxpool.Connect(context.TODO(), os.Getenv("DATABASE_URL"))
-	if err != nil {
-		panic(err)
-	}
+	db = sqlx.MustConnect("pgx", os.Getenv("DATABASE_URL"))
 
 	err = runMigrations()
 	if err != nil {
@@ -32,14 +27,7 @@ func init() {
 }
 
 func runMigrations() error {
-	db, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		return err
-	}
-
-	defer db.Close()
-
-	driver, err := postgres.WithInstance(db, &postgres.Config{
+	driver, err := postgres.WithInstance(db.DB, &postgres.Config{
 		MigrationsTable: "_migrations",
 	})
 
