@@ -30,7 +30,6 @@ var timeDivisor int64 = 1e7
 
 // ----------------------------
 
-// TODO: Set from .env
 var adminPublicKey ed25519.PublicKey
 
 func init() {
@@ -39,10 +38,20 @@ func init() {
 		panic(err)
 	}
 
+	// Configure the logger to be pretty
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 
 	// Uncomment for a lot more logging
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	//zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	// parse the admin key for token operations on the network
+	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ADMIN_KEY"))
+	if err != nil {
+		panic(err)
+	}
+
+	adminPublicKey = adminHederaPrivateKey.PublicKey().Bytes()
 }
 
 func main() {
@@ -118,20 +127,20 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 	case *pb.Primitive_Join:
 		v := primitive.GetJoin()
 
-		//err = verify(primitive.Header, v)
-		//if err != nil {
-		//	return err
-		//}
+		err = verify(primitive.Header, v)
+		if err != nil {
+			return err
+		}
 
 		err = operation.Announce(v)
 
 	case *pb.Primitive_MintTo:
 		v := primitive.GetMintTo()
 
-		//err = verify(primitive.Header, v)
-		//if err != nil {
-		//	return err
-		//}
+		err = verify(primitive.Header, v)
+		if err != nil {
+			return err
+		}
 
 		err = operation.Mint(v)
 
