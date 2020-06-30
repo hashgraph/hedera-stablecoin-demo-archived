@@ -30,7 +30,7 @@ func SendMint(c echo.Context) error {
 		Quantity: uint64(quantity),
 	}
 
-	sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_MintTo{MintTo: v}})
+	go sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_MintTo{MintTo: v}})
 
 	return c.JSON(http.StatusAccepted, transactionResponse{
 		Status:  true,

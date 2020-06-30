@@ -22,7 +22,7 @@ func SendAnnounce(c echo.Context) error {
 		Username: req.Username,
 	}
 
-	sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
+	go sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
 
 	return c.JSON(http.StatusAccepted, transactionResponse{
 		Status:  true,
