@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber"
 	"github.com/golang/protobuf/proto"
 	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/joho/godotenv"
@@ -101,30 +101,43 @@ func init() {
 	}
 }
 
-func SendRawTransaction(c *gin.Context) {
+func SendRawTransaction(c *fiber.Ctx) {
 	var req struct {
 		Primitive string `json:"primitive"`
 	}
 
-	err := c.BindJSON(&req)
+	err := c.BodyParser(&req)
 	if err != nil {
+		log.Warn().Msgf("%v", err)
+		c.SendStatus(400)
 		return
 	}
 
 	primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
 	if err != nil {
-		panic(err)
+		log.Error().Msgf("%v", err)
+		c.SendStatus(500)
+		return
 	}
 
 	err = sendRaw(primitive)
 	if err != nil {
-		panic(err)
+		log.Error().Msgf("%v", err)
+		c.SendStatus(500)
+		return
 	}
 
-	c.JSON(http.StatusAccepted, transactionResponse{
+	c.Status(http.StatusAccepted)
+	err = c.JSON(transactionResponse{
 		Status:  true,
 		Message: "raw transaction request sent",
 	})
+
+	if err != nil {
+		log.Error().Msgf("%v", err)
+		c.SendStatus(500)
+		return
+	}
 }
 
 func sendTransaction(v proto.Message, p *pb.Primitive) {

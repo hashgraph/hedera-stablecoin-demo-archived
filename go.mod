@@ -6,6 +6,7 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/logger v0.0.2
 	github.com/gin-gonic/gin v1.6.3
+	github.com/gofiber/fiber v1.12.1
 	github.com/golang-migrate/migrate/v4 v4.11.0
 	github.com/golang/protobuf v1.4.0-rc.4
 	github.com/gorilla/websocket v1.4.2
