@@ -13,6 +13,7 @@ require (
 	github.com/jackc/pgx/v4 v4.7.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
+	github.com/labstack/echo/v4 v4.1.16
 	github.com/rs/zerolog v1.19.0
 	golang.org/x/net v0.0.0-20200513185701-a91f0712d120 // indirect
 	google.golang.org/grpc v1.29.1 // indirect

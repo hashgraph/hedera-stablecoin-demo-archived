@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.io/hashgraph/stable-coin/pb"
 	"net/http"
 	"strconv"
 )
 
-func SendMint(c *gin.Context) {
+func SendMint(c echo.Context) error {
 	var req struct {
 		// FIXME: UI sends the username where it calls it the address
 		// NOTE: I (@mehcode) prefer the username here, but we should change the field name
@@ -15,15 +15,14 @@ func SendMint(c *gin.Context) {
 		Quantity string `json:"quantity"`
 	}
 
-	err := c.BindJSON(&req)
+	err := c.Bind(&req)
 	if err != nil {
-		return
+		return err
 	}
 
 	quantity, err := strconv.Atoi(req.Quantity)
 	if err != nil {
-		c.AbortWithStatus(http.StatusUnprocessableEntity)
-		return
+		return err
 	}
 
 	v := &pb.MintTo{
@@ -33,7 +32,7 @@ func SendMint(c *gin.Context) {
 
 	sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_MintTo{MintTo: v}})
 
-	c.JSON(http.StatusAccepted, transactionResponse{
+	return c.JSON(http.StatusAccepted, transactionResponse{
 		Status:  true,
 		Message: "MintTo request sent",
 	})
