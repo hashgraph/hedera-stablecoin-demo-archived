@@ -1,13 +1,11 @@
 package main
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/logger"
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.io/hashgraph/stable-coin/api/notification"
 	"github.io/hashgraph/stable-coin/api/routes"
 	"os"
 )
@@ -22,28 +20,28 @@ func init() {
 }
 
 func main() {
-	r := gin.New()
+	e := echo.New()
 
-	r.Use(logger.SetLogger())
-	r.Use(gin.Recovery())
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
 	// https://github.com/gin-contrib/cors
-	r.Use(cors.Default())
+	e.Use(middleware.CORS())
 
-	r.GET("/v1/token", routes.GetToken)
-	r.GET("/v1/token/userExists/:username", routes.GetUserExists)
-	r.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
-	r.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
-	r.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
+	// TODO: e.GET("/v1/token", routes.GetToken)
+	// TODO: e.GET("/v1/token/userExists/:username", routes.GetUserExists)
+	// TODO: e.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
+	// TODO: e.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
+	// TODO: e.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
 
-	r.POST("/v1/token/join", routes.SendAnnounce)
-	r.POST("/v1/token/mintTo", routes.SendMint)
-	r.POST("/v1/token/transaction", routes.SendRawTransaction)
+	e.POST("/v1/token/join", routes.SendAnnounce)
+	e.POST("/v1/token/mintTo", routes.SendMint)
+	e.POST("/v1/token/transaction", routes.SendRawTransaction)
 
-	r.GET("/ws", notification.Handler)
+	// TODO: e.GET("/ws", notification.Handler)
 
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT
-	err := r.Run()
+	err := e.Start(":" + os.Getenv("PORT"))
 	if err != nil {
 		panic(err)
 	}

@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
 	"strconv"
@@ -36,6 +36,6 @@ func getTokenMeta() tokenMeta {
 	}
 }
 
-func GetToken(c *gin.Context) {
-	c.JSON(http.StatusOK, getTokenMeta())
+func GetToken(c echo.Context) error {
+	return c.JSON(http.StatusOK, getTokenMeta())
 }
