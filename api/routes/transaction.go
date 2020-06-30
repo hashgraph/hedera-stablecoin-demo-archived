@@ -116,10 +116,12 @@ func SendRawTransaction(c *gin.Context) {
 		panic(err)
 	}
 
-	err = sendRaw(primitive)
-	if err != nil {
-		panic(err)
-	}
+	go func() {
+		err := sendRaw(primitive)
+		if err != nil {
+			log.Error().Msgf("failed to send transaction: %v", err)
+		}
+	}()
 
 	c.JSON(http.StatusAccepted, transactionResponse{
 		Status:  true,
@@ -141,7 +143,7 @@ func sendTransaction(v proto.Message, p *pb.Primitive) {
 
 	err = sendRaw(messageBytes)
 	if err != nil {
-		panic(err)
+		log.Error().Msgf("failed to send transaction: %v", err)
 	}
 }
 

@@ -22,7 +22,7 @@ func SendAnnounce(c *gin.Context) {
 		Username: req.Username,
 	}
 
-	sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
+	go sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
 
 	c.JSON(http.StatusAccepted, transactionResponse{
 		Status:  true,
