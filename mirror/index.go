@@ -72,7 +72,8 @@ func main() {
 	startTime, err := data.GetLatestOperationConsensus()
 
 	if err == sql.ErrNoRows {
-		startTime = time.Unix(0, 0)
+		startTime = time.Now()
+		//startTime = time.Unix(0, 0)
 	} else if err != nil {
 		panic(err)
 	}
