@@ -26,7 +26,7 @@ func init() {
 func commit() {
 	start := time.Now()
 	numOperations := 0
-	numBalanaces := 0
+	numBalances := 0
 	numUsers := 0
 
 	if len(pendingNewUser) > 0 {
@@ -46,12 +46,14 @@ func commit() {
 
 	if len(pendingOperations) > 0 {
 		// there are pending operations that should be committed
+		pendingOperationsLock.Lock()
 		operations := pendingOperations
 		numOperations = len(operations)
 
 		// erase current maps
 		pendingOperations = nil
 		pendingOperationsForUser = map[string][]domain.Operation{}
+		pendingOperationsLock.Unlock()
 
 		// iterate and insert all the new operations
 		err := data.InsertOperations(operations)
@@ -63,7 +65,7 @@ func commit() {
 	if len(pendingBalances) > 0 {
 		// there are pending operations that should be committed
 		balances := pendingBalances
-		numBalanaces = len(balances)
+		numBalances = len(balances)
 
 		// erase current maps
 		pendingBalances = map[string]uint64{}
@@ -75,12 +77,12 @@ func commit() {
 		}
 	}
 
-	if numOperations > 0 || numBalanaces > 0 {
+	if numOperations > 0 || numBalances > 0 {
 		log.Info().
 			Dur("elapsed", time.Since(start)).
 			Int("operations", numOperations).
 			Int("users", numUsers).
-			Int("balances", numBalanaces).
+			Int("balances", numBalances).
 			Msg("Commit")
 	}
 }

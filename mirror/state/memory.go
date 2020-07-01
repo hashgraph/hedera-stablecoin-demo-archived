@@ -28,6 +28,7 @@ var pendingBalances = map[string]uint64{}
 
 // pending operations to be committed to the database
 var pendingOperations []domain.Operation
+var pendingOperationsLock sync.Mutex
 var pendingOperationsForUser = map[string][]domain.Operation{}
 
 func init() {
@@ -66,7 +67,9 @@ func UpdateBalance(userName string, update func(uint64) uint64) {
 
 // AddOperation adds an operation to the pending store to be committed on the commit interval
 func AddOperation(op domain.Operation) {
+	pendingOperationsLock.Lock()
 	pendingOperations = append(pendingOperations, op)
+	pendingOperationsLock.Unlock()
 
 	if op.FromAddress != nil {
 		if fromUserName, ok := Address.Load(hex.EncodeToString(*op.FromAddress)); ok {
