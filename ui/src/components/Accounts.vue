@@ -96,7 +96,6 @@
         inProgress: false,
         // accountsTitle: 'Your accounts',
         balance: 0,
-        restAPI: 'http://' + window.location.hostname + ':' + process.env.HOST_PORT,
         frozen: 0
       }
     },

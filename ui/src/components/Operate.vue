@@ -279,7 +279,8 @@
     },
     data () {
       return {
-        restAPI: 'http://' + window.location.hostname + ':' + process.env.HOST_PORT,
+        getRestAPI: 'http://' + window.location.hostname + ':' + process.env.GET_PORT,
+        postRestAPI: 'http://' + window.location.hostname + ':' + process.env.POST_PORT,
         inProgress: false,
         balance: 0,
         tokenName: Cookie.get('tokenName'),
@@ -323,7 +324,7 @@
       if ((typeof (this.address) === 'undefined') || (this.address === '')) {
         router.replace('/')
       } else if (this.userName !== 'Admin') {
-        axios.get(this.restAPI.concat('/v1/token/userExists/' + this.userName))
+        axios.get(this.getRestAPI.concat('/v1/token/userExists/' + this.userName))
           .then(response => {
             if (response.data.exists === false) {
               // user doesn't exist
@@ -361,7 +362,7 @@
         router.replace('/')
       },
       getOperations: function () {
-        axios.get(this.restAPI.concat('/v1/token/operations/' + this.userName))
+        axios.get(this.getRestAPI.concat('/v1/token/operations/' + this.userName))
           .then(response => {
             this.operations = []
 
@@ -468,7 +469,7 @@
 
         this.inProgress = true
 
-        axios.post(this.restAPI.concat('/v1/token/mintTo'), body)
+        axios.post(this.postRestAPI.concat('/v1/token/mintTo'), body)
           .then(response => {
             this.inProgress = false
             console.log(response.data.message)
@@ -504,7 +505,7 @@
 
           this.inProgress = true
 
-          axios.post(this.restAPI.concat('/v1/token/transaction'), body)
+          axios.post(this.postRestAPI.concat('/v1/token/transaction'), body)
             .then(response => {
               this.inProgress = false
               console.log(response.data.message)
@@ -543,7 +544,7 @@
 
           this.inProgress = true
 
-          axios.post(this.restAPI.concat('/v1/token/transaction'), body)
+          axios.post(this.postRestAPI.concat('/v1/token/transaction'), body)
             .then(response => {
               this.inProgress = false
               console.log(response.data.message)

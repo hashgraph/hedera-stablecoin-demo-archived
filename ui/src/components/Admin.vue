@@ -191,7 +191,8 @@
     },
     data () {
       return {
-        restAPI: 'http://' + window.location.hostname + ':' + process.env.HOST_PORT,
+        getRestAPI: 'http://' + window.location.hostname + ':' + process.env.GET_PORT,
+        postRestAPI: 'http://' + window.location.hostname + ':' + process.env.POST_PORT,
         inProgress: false,
         users: [],
         list: [],
@@ -227,9 +228,9 @@
         this.list = []
         let url = ''
         if (this.getFrozen) {
-          url = this.restAPI.concat('/v1/token/users/frozen')
+          url = this.getRestAPI.concat('/v1/token/users/frozen')
         } else {
-          url = this.restAPI.concat('/v1/token/users/unfrozen')
+          url = this.getRestAPI.concat('/v1/token/users/unfrozen')
         }
 
         axios.get(url)
@@ -269,7 +270,7 @@
 
           this.inProgress = true
 
-          axios.post(this.restAPI.concat('/v1/token/transaction'), body)
+          axios.post(this.postRestAPI.concat('/v1/token/transaction'), body)
             .then(response => {
               this.inProgress = false
               console.log(response.data.message)
@@ -307,7 +308,7 @@
 
         this.inProgress = true
 
-        axios.post(this.restAPI.concat('/v1/token/transaction'), body)
+        axios.post(this.postRestAPI.concat('/v1/token/transaction'), body)
           .then(response => {
             this.inProgress = false
             console.log(response.data.message)

@@ -1,7 +1,5 @@
 <template>
   <div>
-    <ProgressDialog :show="inProgress"></ProgressDialog>
-
     <v-toolbar dense>
       <v-btn icon @click="home">
         <v-icon>mdi-arrow-left</v-icon>
@@ -83,8 +81,6 @@
     },
     data () {
       return {
-        restAPI: 'http://' + window.location.hostname + ':' + process.env.HOST_PORT,
-        inProgress: false,
         keyValid: false,
         key: '',
         keyRules: [

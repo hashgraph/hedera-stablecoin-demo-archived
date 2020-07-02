@@ -75,7 +75,8 @@
     data () {
       return {
         valid: false,
-        restAPI: 'http://' + window.location.hostname + ':' + process.env.HOST_PORT,
+        getRestAPI: 'http://' + window.location.hostname + ':' + process.env.GET_PORT,
+        postRestAPI: 'http://' + window.location.hostname + ':' + process.env.POST_PORT,
         name: Cookie.get('tokenName'),
         quantity: 0,
         inProgress: false,
@@ -99,7 +100,7 @@
 
         this.inProgress = true
 
-        axios.post(this.restAPI.concat('/v1/token/mint'), body)
+        axios.post(this.postRestAPI.concat('/v1/token/mint'), body)
           .then(response => {
             this.inProgress = false
             console.log(response.data.message)

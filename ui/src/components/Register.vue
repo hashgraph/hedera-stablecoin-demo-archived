@@ -108,7 +108,8 @@
     data () {
       return {
         valid: false,
-        restAPI: 'http://' + window.location.hostname + ':' + process.env.HOST_PORT,
+        getRestAPI: 'http://' + window.location.hostname + ':' + process.env.GET_PORT,
+        postRestAPI: 'http://' + window.location.hostname + ':' + process.env.POST_PORT,
         forename: Utils.getRandomFirstName(),
         surname: Utils.getRandomLastName(),
         idProof: Utils.getRandomId(), // 'KJUH1232232',
@@ -136,7 +137,7 @@
 
             this.inProgress = true
 
-            axios.post(this.restAPI.concat('/v1/token/join'), body)
+            axios.post(this.postRestAPI.concat('/v1/token/join'), body)
               .then(response => {
                 this.inProgress = false
                 console.log(response.data.message)

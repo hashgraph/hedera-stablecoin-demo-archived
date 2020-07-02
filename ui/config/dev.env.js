@@ -5,5 +5,6 @@ const prodEnv = require('./prod.env')
 
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
-  HOST_PORT: '3128'
+  GET_PORT: '3129',
+  POST_PORT: '3128'
 })

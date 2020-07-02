@@ -1,4 +1,5 @@
 module.exports = {
   NODE_ENV: '"production"',
-  HOST_PORT: '3128'
+  GET_PORT: '3129',
+  POST_PORT: '3128'
 }

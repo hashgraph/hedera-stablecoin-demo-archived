@@ -89,7 +89,8 @@
     data () {
       return {
         msg: 'Welcome to Hedera Token',
-        restAPI: 'http://' + window.location.hostname + ':' + process.env.HOST_PORT,
+        getRestAPI: 'http://' + window.location.hostname + ':' + process.env.GET_PORT,
+        postRestAPI: 'http://' + window.location.hostname + ':' + process.env.POST_PORT,
         userName: Cookie.get('userName'),
         userKey: '',
         state: '',
@@ -128,7 +129,7 @@
         // validate admin key
         const privateKey = Ed25519PrivateKey.fromString(Cookie.get('userKey'))
         const publicKey = privateKey.publicKey.toString()
-        axios.get(this.restAPI.concat('/v1/token/isAdminUser/' + publicKey))
+        axios.get(this.getRestAPI.concat('/v1/token/isAdminUser/' + publicKey))
           .then(response => {
             if (response.data.valid === false) {
               // user is not admin
@@ -142,7 +143,7 @@
             console.log(e)
           })
       } else if ((typeof (this.userName) !== 'undefined') && (this.userName !== '')) {
-        axios.get(this.restAPI.concat('/v1/token/userExists/' + this.userName))
+        axios.get(this.getRestAPI.concat('/v1/token/userExists/' + this.userName))
           .then(response => {
             if (response.data.exists === false) {
               // user doesn't exist
@@ -154,7 +155,7 @@
           })
       }
 
-      axios.get(this.restAPI.concat('/v1/token'))
+      axios.get(this.getRestAPI.concat('/v1/token'))
         .then(response => {
           Cookie.set('tokenName', response.data.name, { expires: 365 })
           this.userName = Cookie.get('userName')

@@ -8,7 +8,7 @@ const {
   Ed25519PrivateKey
 } = require('@hashgraph/sdk')
 
-const restAPI = 'http://' + window.location.hostname + ':' + process.env.HOST_PORT
+const getRestAPI = 'http://' + window.location.hostname + ':' + process.env.GET_PORT
 
 const firstnames = ['Liam', 'Noah', 'William', 'James', 'Oliver', 'Benjamin', 'Elijah', 'Lucas', 'Mason', 'Logan', 'Alexander',
   'Ethan', 'Jacob', 'Michael', 'Daniel', 'Henry', 'Jackson', 'Sebastian', 'Aiden', 'Matthew', 'Samuel',
@@ -48,7 +48,7 @@ export default {
       } else {
         const privKey = Ed25519PrivateKey.fromString(address)
         const pubKey = privKey.publicKey.toString()
-        axios.get(restAPI.concat('/v1/token/balance/' + pubKey))
+        axios.get(getRestAPI.concat('/v1/token/balance/' + pubKey))
           .then(response => {
             resolve(response.data)
           })
@@ -67,7 +67,7 @@ export default {
         const privKey = Ed25519PrivateKey.fromString(address)
         pubKey = privKey.publicKey.toString()
       }
-      axios.get(restAPI.concat('/v1/token/users/' + pubKey))
+      axios.get(getRestAPI.concat('/v1/token/users/' + pubKey))
         .then(response => {
           if (response.data === null) {
             resolve([])
