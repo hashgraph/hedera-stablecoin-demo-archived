@@ -35,6 +35,9 @@ var timeDivisor int64 = 1e7
 
 // ----------------------------
 
+var mirrorClient hedera.MirrorClient
+var listenAttempts = 0
+
 func init() {
 	err := godotenv.Load()
 	if err != nil {
@@ -54,43 +57,72 @@ func init() {
 }
 
 func main() {
-	mirrorClient, err := hedera.NewMirrorClient(os.Getenv("HEDERA_MIRROR_NODE"))
+	var err error
+	mirrorClient, err = hedera.NewMirrorClient(os.Getenv("HEDERA_MIRROR_NODE"))
 	if err != nil {
 		panic(err)
 	}
 
-	topicID, err := hedera.TopicIDFromString(os.Getenv("TOPIC_ID"))
-	if err != nil {
-		panic(err)
-	}
-
-	startTime, err := data.GetLatestOperationConsensus()
-
-	if err == sql.ErrNoRows {
-		startTime = time.Now()
-		//startTime = time.Unix(0, 0)
-	} else if err != nil {
-		panic(err)
-	}
-
-	_, err = hedera.NewMirrorConsensusTopicQuery().
-		SetTopicID(topicID).
-		SetStartTime(startTime.Add(1 * time.Second)).
-		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
-			err := handle(response)
-			if err != nil {
-				panic(err)
-			}
-		}, func(err error) {
-			panic(err)
-		})
-
+	// start the mirror listener
+	err = startListening()
 	if err != nil {
 		panic(err)
 	}
 
 	// now that the mirror client is running in the background, proceed to run the mirror API
 	api.Run()
+}
+
+func startListening() error {
+	topicID, err := hedera.TopicIDFromString(os.Getenv("TOPIC_ID"))
+	if err != nil {
+		return err
+	}
+
+	startTime, err := data.GetLatestOperationConsensus()
+
+	if err == sql.ErrNoRows {
+		startTime = time.Now()
+	} else if err != nil {
+		return err
+	}
+
+	_, err = hedera.NewMirrorConsensusTopicQuery().
+		SetTopicID(topicID).
+		SetStartTime(startTime.Add(1*time.Second)).
+		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
+			listenAttempts = 0
+
+			err := handle(response)
+			if err != nil {
+				log.Error().Err(err).
+					Uint64("seq", response.SequenceNumber).
+					Msg("failed to process message; skipping")
+			}
+		}, handleSubscribeFail)
+
+	if err != nil {
+		// FIXME(sdk): immediate subscribe fails should probably hit the subscribe fail
+		handleSubscribeFail(err)
+	}
+
+	return nil
+}
+
+func handleSubscribeFail(err error) {
+	listenAttempts += 1
+
+	delay := time.Duration(listenAttempts) * time.Millisecond * 250
+
+	log.Error().Err(err).
+		Msgf("mirror subscribe failed; reconnecting in %s...", delay)
+
+	time.Sleep(delay)
+
+	err = startListening()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func handle(response hedera.MirrorConsensusTopicResponse) error {
