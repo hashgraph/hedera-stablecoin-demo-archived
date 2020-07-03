@@ -35,7 +35,7 @@ func commit() {
 		numUsers = len(users)
 
 		// erase current maps
-		pendingNewUser = nil
+		pendingNewUser = []string{}
 
 		// insert the new user records
 		err := data.InsertNewAddresses(users, &User)
@@ -51,7 +51,7 @@ func commit() {
 		numOperations = len(operations)
 
 		// erase current maps
-		pendingOperations = nil
+		pendingOperations = []domain.Operation{}
 		pendingOperationsForUser = map[string][]domain.Operation{}
 		pendingOperationsLock.Unlock()
 
