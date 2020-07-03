@@ -1,9 +1,8 @@
 package notification
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/rs/zerolog/log"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
@@ -20,12 +19,14 @@ var upgrader = websocket.Upgrader{
 // map of users to web sockets
 var socketForUser = map[string]*websocket.Conn{}
 
-func Handler(c *gin.Context) {
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+// https://echo.labstack.com/cookbook/websocket
+func Handler(c echo.Context) error {
+	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		log.Err(err).Msg("cannot upgrade to ws://")
-		return
+		return err
 	}
+
+	defer ws.Close()
 
 	// client should send us an announce
 	// that identifies them
@@ -34,25 +35,21 @@ func Handler(c *gin.Context) {
 		UserName string `json:"userId"`
 	}
 
-	err = conn.ReadJSON(&n)
+	err = ws.ReadJSON(&n)
 	if err != nil {
-		if err != websocket.ErrCloseSent {
-			log.Err(err).Msg("cannot read message from ws")
-		}
-
-		return
+		return err
 	}
 
 	// now, remember the connection (and keep it open) so we can reach for it when wanting to
 	// send out a notification
 	// TODO: multiple sockets per user?
 
-	socketForUser[n.UserName] = conn
+	socketForUser[n.UserName] = ws
 
 	// on close, let us remove ourselves from the map
 	// to clean up memory and not try to ping a dead channel
 
-	conn.SetCloseHandler(func(code int, text string) error {
+	ws.SetCloseHandler(func(code int, text string) error {
 		delete(socketForUser, n.UserName)
 
 		return nil

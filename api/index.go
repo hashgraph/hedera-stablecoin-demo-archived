@@ -4,8 +4,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/ziflex/lecho/v2"
+	"github.io/hashgraph/stable-coin/api/notification"
 	"github.io/hashgraph/stable-coin/api/routes"
 	"os"
 )
@@ -15,34 +17,46 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 }
 
 func main() {
 	e := echo.New()
 
-	e.Use(middleware.Logger())
+	logger := lecho.New(os.Stderr, lecho.WithTimestamp())
+	logger.SetOutput(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
+
+	// configure log level for mirror from env
+	logger.SetLevel(mustParseEchoLogLevel(os.Getenv("MIRROR_API_LOG")))
+
+	e.Logger = logger
+
 	e.Use(middleware.Recover())
 
-	// https://github.com/gin-contrib/cors
-	e.Use(middleware.CORS())
+	e.Use(lecho.Middleware(lecho.Config{
+		Logger: logger,
+	}))
 
-	// TODO: e.GET("/v1/token", routes.GetToken)
-	// TODO: e.GET("/v1/token/userExists/:username", routes.GetUserExists)
-	// TODO: e.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
-	// TODO: e.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
-	// TODO: e.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
+	e.Use(middleware.CORS())
 
 	e.POST("/v1/token/join", routes.SendAnnounce)
 	e.POST("/v1/token/mintTo", routes.SendMint)
 	e.POST("/v1/token/transaction", routes.SendRawTransaction)
 
-	// TODO: e.GET("/ws", notification.Handler)
+	e.GET("/ws", notification.Handler)
 
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT
 	err := e.Start(":" + os.Getenv("PORT"))
 	if err != nil {
 		panic(err)
 	}
+}
+
+func mustParseEchoLogLevel(s string) log.Lvl {
+	return map[string]log.Lvl{
+		"DEBUG": log.DEBUG,
+		"INFO":  log.INFO,
+		"WARN":  log.WARN,
+		"ERROR": log.ERROR,
+		"OFF":   log.OFF,
+	}[s]
 }

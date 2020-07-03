@@ -18,6 +18,7 @@ import (
 	"github.io/hashgraph/stable-coin/pb"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -34,8 +35,6 @@ var timeDivisor int64 = 1e7
 
 // ----------------------------
 
-var adminPublicKey ed25519.PublicKey
-
 func init() {
 	err := godotenv.Load()
 	if err != nil {
@@ -45,17 +44,13 @@ func init() {
 	// Configure the logger to be pretty
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 
-	// Uncomment for a lot more logging
-	//zerolog.SetGlobalLevel(zerolog.TraceLevel)
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-
-	// parse the admin key for token operations on the network
-	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ADMIN_KEY"))
+	// configure log level for mirror from env
+	lvl, err := zerolog.ParseLevel(strings.ToLower(os.Getenv("MIRROR_LOG")))
 	if err != nil {
 		panic(err)
 	}
 
-	adminPublicKey = adminHederaPrivateKey.PublicKey().Bytes()
+	zerolog.SetGlobalLevel(lvl)
 }
 
 func main() {
