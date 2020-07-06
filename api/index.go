@@ -7,7 +7,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.io/hashgraph/stable-coin/api/notification"
 	"github.io/hashgraph/stable-coin/api/routes"
 	"os"
 )
@@ -30,7 +29,6 @@ func main() {
 	// https://github.com/gin-contrib/cors
 	r.Use(cors.Default())
 
-	r.GET("/v1/token", routes.GetToken)
 	r.GET("/v1/token/userExists/:username", routes.GetUserExists)
 	r.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
 	r.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
@@ -39,8 +37,6 @@ func main() {
 	r.POST("/v1/token/join", routes.SendAnnounce)
 	r.POST("/v1/token/mintTo", routes.SendMint)
 	r.POST("/v1/token/transaction", routes.SendRawTransaction)
-
-	r.GET("/ws", notification.Handler)
 
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT
 	err := r.Run()
