@@ -80,7 +80,7 @@ func main() {
 
 	_, err = hedera.NewMirrorConsensusTopicQuery().
 		SetTopicID(topicID).
-		SetStartTime(startTime.Add(1 * time.Second)).
+		SetStartTime(startTime.Add(1 * time.Nanosecond)).
 		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
 			err := handle(response)
 			if err != nil {
