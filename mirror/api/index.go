@@ -1,33 +1,53 @@
 package api
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/logger"
-	"github.com/gin-gonic/gin"
-	"github.io/hashgraph/stable-coin/mirror/api/notification"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
+	"github.com/rs/zerolog"
+	"github.com/ziflex/lecho/v2"
 	"github.io/hashgraph/stable-coin/mirror/api/routes"
 	"os"
 )
 
 func Run() {
-	r := gin.New()
+	e := echo.New()
 
-	r.Use(logger.SetLogger())
-	r.Use(gin.Recovery())
+	logger := lecho.New(os.Stderr, lecho.WithTimestamp())
+	logger.SetOutput(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 
-	// https://github.com/gin-contrib/cors
-	r.Use(cors.Default())
-	r.GET("/v1/token", routes.GetToken)
-	r.GET("/v1/token/userExists/:username", routes.GetUserExists)
-	r.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
-	r.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
+	// configure log level for mirror from env
+	logger.SetLevel(mustParseEchoLogLevel(os.Getenv("MIRROR_API_LOG")))
+
+	e.Logger = logger
+
+	e.Use(middleware.Recover())
+
+	e.Use(lecho.Middleware(lecho.Config{
+		Logger: logger,
+	}))
+
+	e.Use(middleware.CORS())
+
+	e.GET("/v1/token", routes.GetToken)
+	e.GET("/v1/token/userExists/:username", routes.GetUserExists)
+	e.GET("/v1/token/balance/:address", routes.GetUserBalanceByAddress)
+	e.GET("/v1/token/users/:address", routes.GetOtherUsersByAddress)
+	e.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
 	r.GET("/v1/token/usersSearch/:username", routes.GetUsersByPartialMatch)
-	r.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
 
-	r.GET("/ws", notification.Handler)
-
-	err := r.Run(":" + os.Getenv("MIRROR_PORT"))
+	err := e.Start(":" + os.Getenv("MIRROR_PORT"))
 	if err != nil {
 		panic(err)
 	}
+}
+
+func mustParseEchoLogLevel(s string) log.Lvl {
+	return map[string]log.Lvl{
+		"DEBUG": log.DEBUG,
+		"INFO":  log.INFO,
+		"WARN":  log.WARN,
+		"ERROR": log.ERROR,
+		"OFF":   log.OFF,
+	}[s]
 }

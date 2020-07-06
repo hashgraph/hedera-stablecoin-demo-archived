@@ -249,8 +249,9 @@ Type `.exit` to exit the node command line
 
 Ensure that `config/dev.env.js` and `config/prod.env.js` (if applicable) are configured properly:
 
-`HOST_PORT: '3128'` must match the `PORT=3128` specified in the `.env` file earlier in this document
-
+`POST_PORT: '3128'` must match the `PORT=3128` specified in the `.env` file earlier in this document
+`GET_PORT: '3129'` must match the `MIRROR_PORT=3129` specified in the `.env` file earlier in this document  
+  
 #### Install compiler tools
 
 ```shell script

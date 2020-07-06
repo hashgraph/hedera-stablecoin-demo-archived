@@ -7,10 +7,10 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
 	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/pb"
@@ -101,27 +101,27 @@ func init() {
 	}
 }
 
-func SendRawTransaction(c *gin.Context) {
+func SendRawTransaction(c echo.Context) error {
 	var req struct {
 		Primitive string `json:"primitive"`
 	}
 
-	err := c.BindJSON(&req)
+	err := c.Bind(&req)
 	if err != nil {
-		return
+		return err
 	}
 
 	primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = sendRaw(primitive)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	c.JSON(http.StatusAccepted, transactionResponse{
+	return c.JSON(http.StatusAccepted, transactionResponse{
 		Status:  true,
 		Message: "raw transaction request sent",
 	})

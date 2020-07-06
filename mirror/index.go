@@ -18,6 +18,7 @@ import (
 	"github.io/hashgraph/stable-coin/pb"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -34,7 +35,8 @@ var timeDivisor int64 = 1e7
 
 // ----------------------------
 
-var adminPublicKey ed25519.PublicKey
+var mirrorClient hedera.MirrorClient
+var listenAttempts = 0
 
 func init() {
 	err := godotenv.Load()
@@ -45,57 +47,82 @@ func init() {
 	// Configure the logger to be pretty
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 
-	// Uncomment for a lot more logging
-	//zerolog.SetGlobalLevel(zerolog.TraceLevel)
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-
-	// parse the admin key for token operations on the network
-	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ADMIN_KEY"))
+	// configure log level for mirror from env
+	lvl, err := zerolog.ParseLevel(strings.ToLower(os.Getenv("MIRROR_LOG")))
 	if err != nil {
 		panic(err)
 	}
 
-	adminPublicKey = adminHederaPrivateKey.PublicKey().Bytes()
+	zerolog.SetGlobalLevel(lvl)
 }
 
 func main() {
-	mirrorClient, err := hedera.NewMirrorClient(os.Getenv("HEDERA_MIRROR_NODE"))
+	var err error
+	mirrorClient, err = hedera.NewMirrorClient(os.Getenv("HEDERA_MIRROR_NODE"))
 	if err != nil {
 		panic(err)
 	}
 
-	topicID, err := hedera.TopicIDFromString(os.Getenv("TOPIC_ID"))
-	if err != nil {
-		panic(err)
-	}
-
-	startTime, err := data.GetLatestOperationConsensus()
-
-	if err == sql.ErrNoRows {
-		startTime = time.Now()
-		//startTime = time.Unix(0, 0)
-	} else if err != nil {
-		panic(err)
-	}
-
-	_, err = hedera.NewMirrorConsensusTopicQuery().
-		SetTopicID(topicID).
-		SetStartTime(startTime.Add(1 * time.Nanosecond)).
-		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
-			err := handle(response)
-			if err != nil {
-				panic(err)
-			}
-		}, func(err error) {
-			panic(err)
-		})
-
+	// start the mirror listener
+	err = startListening()
 	if err != nil {
 		panic(err)
 	}
 
 	// now that the mirror client is running in the background, proceed to run the mirror API
 	api.Run()
+}
+
+func startListening() error {
+	topicID, err := hedera.TopicIDFromString(os.Getenv("TOPIC_ID"))
+	if err != nil {
+		return err
+	}
+
+	startTime, err := data.GetLatestOperationConsensus()
+
+	if err == sql.ErrNoRows {
+		startTime = time.Now()
+	} else if err != nil {
+		return err
+	}
+
+	_, err = hedera.NewMirrorConsensusTopicQuery().
+		SetTopicID(topicID).
+		SetStartTime(startTime.Add(1 * time.Nanosecond)).
+		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
+			listenAttempts = 0
+
+			err := handle(response)
+			if err != nil {
+				log.Error().Err(err).
+					Uint64("seq", response.SequenceNumber).
+					Msg("failed to process message; skipping")
+			}
+		}, handleSubscribeFail)
+
+	if err != nil {
+		// FIXME(sdk): immediate subscribe fails should probably hit the subscribe fail
+		handleSubscribeFail(err)
+	}
+
+	return nil
+}
+
+func handleSubscribeFail(err error) {
+	listenAttempts += 1
+
+	delay := time.Duration(listenAttempts) * time.Millisecond * 250
+
+	log.Error().Err(err).
+		Msgf("mirror subscribe failed; reconnecting in %s...", delay)
+
+	time.Sleep(delay)
+
+	err = startListening()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func handle(response hedera.MirrorConsensusTopicResponse) error {

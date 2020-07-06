@@ -1,20 +1,20 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.io/hashgraph/stable-coin/pb"
 	"net/http"
 )
 
-func SendAnnounce(c *gin.Context) {
+func SendAnnounce(c echo.Context) error {
 	var req struct {
 		PublicKey string `json:"publicKey"`
 		Username  string `json:"username"`
 	}
 
-	err := c.BindJSON(&req)
+	err := c.Bind(&req)
 	if err != nil {
-		return
+		return err
 	}
 
 	v := &pb.Join{
@@ -24,7 +24,7 @@ func SendAnnounce(c *gin.Context) {
 
 	sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
 
-	c.JSON(http.StatusAccepted, transactionResponse{
+	return c.JSON(http.StatusAccepted, transactionResponse{
 		Status:  true,
 		Message: "Join request sent",
 	})
