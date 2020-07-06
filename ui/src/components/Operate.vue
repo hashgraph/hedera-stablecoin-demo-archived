@@ -503,7 +503,7 @@
                 operation.textColor = 'green--text'
               } else {
                 operation.textColor = 'deep-orange--text'
-                operation.operationDetail = obj.failure_reason.replace('E: ', '')
+                operation.operationDetail = obj.statusMessage
               }
               operation.id = obj.id
               this.operations.push(operation)

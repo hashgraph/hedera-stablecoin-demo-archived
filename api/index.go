@@ -41,8 +41,6 @@ func main() {
 	e.POST("/v1/token/mintTo", routes.SendMint)
 	e.POST("/v1/token/transaction", routes.SendRawTransaction)
 
-	e.GET("/ws", notification.Handler)
-
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT
 	err := e.Start(":" + os.Getenv("PORT"))
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func GetUsersByPartialMatch(c *gin.Context) {
+func GetUsersByPartialMatch(c echo.Context) error {
 	userNames := []string{}
 
 	searchValue := c.Param("username")
@@ -27,9 +27,9 @@ func GetUsersByPartialMatch(c *gin.Context) {
 		})
 	}
 	if len(userNames) > 10 {
-		c.JSON(http.StatusOK, userNames[0:10])
+		return c.JSON(http.StatusOK, userNames[0:10])
 	} else {
-		c.JSON(http.StatusOK, userNames)
+		return c.JSON(http.StatusOK, userNames)
 	}
 }
 
