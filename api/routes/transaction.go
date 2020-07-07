@@ -23,7 +23,6 @@ import (
 
 var hederaClient *hedera.Client
 var hederaTopicID hedera.ConsensusTopicID
-
 var adminPrivateKey ed25519.PrivateKey
 
 type transactionResponse struct {
@@ -107,42 +106,43 @@ func SendRawTransaction(c echo.Context) error {
 	}
 
 	err := c.Bind(&req)
-	if err != nil {
-		return err
+	if err == nil {
+		primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
+		if err == nil {
+			err = sendRaw(primitive)
+		}
 	}
 
-	primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
-	if err != nil {
-		return err
+	if err == nil {
+		return c.JSON(http.StatusAccepted, transactionResponse{
+			Status:  true,
+			Message: "raw transaction request sent",
+		})
+	} else {
+		return c.JSON(http.StatusInternalServerError, transactionResponse{
+			Status:  false,
+			Message: err.Error(),
+		})
 	}
-
-	err = sendRaw(primitive)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusAccepted, transactionResponse{
-		Status:  true,
-		Message: "raw transaction request sent",
-	})
 }
 
-func sendTransaction(v proto.Message, p *pb.Primitive) {
+func sendTransaction(v proto.Message, p *pb.Primitive) error {
 	var err error
 	p.Header, err = makePrimitiveHeader(v)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	messageBytes, err := proto.Marshal(p)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = sendRaw(messageBytes)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func sendRaw(raw []byte) error {

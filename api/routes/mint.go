@@ -16,24 +16,27 @@ func SendMint(c echo.Context) error {
 	}
 
 	err := c.Bind(&req)
-	if err != nil {
-		return err
+	if err == nil {
+		quantity, err := strconv.Atoi(req.Quantity)
+		if err == nil {
+
+			v := &pb.MintTo{
+				Address:  req.Username,
+				Quantity: uint64(quantity),
+			}
+			err = sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_MintTo{MintTo: v}})
+		}
 	}
 
-	quantity, err := strconv.Atoi(req.Quantity)
-	if err != nil {
-		return err
+	if (err == nil) {
+		return c.JSON(http.StatusAccepted, transactionResponse{
+			Status:  true,
+			Message: "MintTo request sent",
+		})
+	} else {
+		return c.JSON(http.StatusInternalServerError, transactionResponse{
+			Status:  false,
+			Message: err.Error(),
+		})
 	}
-
-	v := &pb.MintTo{
-		Address:  req.Username,
-		Quantity: uint64(quantity),
-	}
-
-	sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_MintTo{MintTo: v}})
-
-	return c.JSON(http.StatusAccepted, transactionResponse{
-		Status:  true,
-		Message: "MintTo request sent",
-	})
 }
