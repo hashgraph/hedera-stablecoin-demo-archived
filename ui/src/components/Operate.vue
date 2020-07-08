@@ -393,10 +393,6 @@
           this.balance = balance.balance
           this.frozen = balance.frozen
         })
-      // Utils.getUsers()
-      //   .then(users => {
-      //     this.sendToList = users
-      //   })
 
       this.getOperations()
 

@@ -4,10 +4,6 @@ import * as Proto from './proto/messages_pb'
 import axios from 'axios'
 import Cookie from 'js-cookie'
 
-const {
-  Ed25519PrivateKey
-} = require('@hashgraph/sdk')
-
 const getRestAPI = 'http://' + window.location.hostname + ':' + process.env.GET_PORT
 
 const firstnames = ['Liam', 'Noah', 'William', 'James', 'Oliver', 'Benjamin', 'Elijah', 'Lucas', 'Mason', 'Logan', 'Alexander',
@@ -42,13 +38,11 @@ export default {
   },
   getBalance () {
     return new Promise(function (resolve, reject) {
-      const address = Cookie.get('userKey')
-      if ((typeof (address) === 'undefined') || (address === '')) {
+      const username = Cookie.get('userName')
+      if ((typeof (username) === 'undefined') || (username === '')) {
         resolve(0)
       } else {
-        const privKey = Ed25519PrivateKey.fromString(address)
-        const pubKey = privKey.publicKey.toString()
-        axios.get(getRestAPI.concat('/v1/token/balance/' + pubKey))
+        axios.get(getRestAPI.concat('/v1/token/balance/' + username))
           .then(response => {
             resolve(response.data)
           })
@@ -57,28 +51,6 @@ export default {
             resolve(0)
           })
       }
-    })
-  },
-  getUsers () {
-    return new Promise(function (resolve, reject) {
-      const address = Cookie.get('userKey')
-      let pubKey = ''
-      if ((typeof (address) !== 'undefined') && (address !== '')) {
-        const privKey = Ed25519PrivateKey.fromString(address)
-        pubKey = privKey.publicKey.toString()
-      }
-      axios.get(getRestAPI.concat('/v1/token/users/' + pubKey))
-        .then(response => {
-          if (response.data === null) {
-            resolve([])
-          } else {
-            resolve(response.data)
-          }
-        })
-        .catch(e => {
-          console.log(e)
-          resolve([])
-        })
     })
   },
   toHexString (byteArray) {
