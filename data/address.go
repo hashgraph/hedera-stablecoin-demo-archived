@@ -48,3 +48,20 @@ func InsertNewAddresses(newUsers []string, userToAddress *sync.Map) error {
 
 	return nil
 }
+func UpdateUserFrozenStatus(users map[string]bool) error {
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	for userName, frozen := range users {
+		_, err := tx.Exec("UPDATE address SET frozen = $1 WHERE username = $2", frozen, userName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
