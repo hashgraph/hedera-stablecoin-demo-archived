@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/joho/godotenv"
@@ -19,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var hederaClient *hedera.Client
@@ -146,12 +148,21 @@ func sendTransaction(v proto.Message, p *pb.Primitive) error {
 }
 
 func sendRaw(raw []byte) error {
-	_, err := hedera.NewConsensusMessageSubmitTransaction().
-		SetMessage(raw).
-		SetTopicID(hederaTopicID).
-		Execute(hederaClient)
-
-	return err
+	for {
+		// Repeat sending in the event of a duplicate transaction id
+		_, err := hedera.NewConsensusMessageSubmitTransaction().
+			SetMessage(raw).
+			SetTopicID(hederaTopicID).
+			Execute(hederaClient)
+		if err != nil {
+			fmt.Println(err.Error())
+			if !strings.Contains(err.Error(),"DUPLICATE_TRANSACTION") {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
 }
 
 func makePrimitiveHeader(v proto.Message) (*pb.PrimitiveHeader, error) {
