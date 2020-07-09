@@ -28,6 +28,7 @@ func commit() {
 	numOperations := 0
 	numBalances := 0
 	numUsers := 0
+	numFreezes := 0
 
 	if len(pendingNewUser) > 0 {
 		// there are pending operations that should be committed
@@ -77,12 +78,28 @@ func commit() {
 		}
 	}
 
-	if numOperations > 0 || numBalances > 0 {
+	if len(pendingFreezes) > 0 {
+		// there are pending freezes that should be committed
+		freezes := pendingFreezes
+		numFreezes = len(freezes)
+
+		// erase current maps
+		pendingFreezes = map[string]bool{}
+
+		// update the balance records
+		err := data.UpdateUserFrozenStatus(freezes)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if numOperations > 0 || numBalances > 0 || numFreezes > 0 {
 		log.Info().
 			Dur("elapsed", time.Since(start)).
 			Int("operations", numOperations).
 			Int("users", numUsers).
 			Int("balances", numBalances).
+			Int("freezes", numFreezes).
 			Msg("Commit")
 	}
 }
