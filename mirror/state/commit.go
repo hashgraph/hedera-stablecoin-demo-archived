@@ -1,10 +1,11 @@
 package state
 
 import (
+	"time"
+
 	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/data"
 	"github.io/hashgraph/stable-coin/domain"
-	"time"
 )
 
 var commitInterval = "1s"
@@ -31,12 +32,15 @@ func commit() {
 	numFreezes := 0
 
 	if len(pendingNewUser) > 0 {
+		pendingNewUserLock.Lock()
+
 		// there are pending operations that should be committed
 		users := pendingNewUser
 		numUsers = len(users)
 
 		// erase current maps
 		pendingNewUser = []string{}
+		pendingNewUserLock.Unlock()
 
 		// insert the new user records
 		err := data.InsertNewAddresses(users, &User)
@@ -64,12 +68,15 @@ func commit() {
 	}
 
 	if len(pendingBalances) > 0 {
+		pendingBalancesLock.Lock()
+
 		// there are pending operations that should be committed
 		balances := pendingBalances
 		numBalances = len(balances)
 
 		// erase current maps
 		pendingBalances = map[string]uint64{}
+		pendingBalancesLock.Unlock()
 
 		// update the balance records
 		err := data.UpdateUserBalances(balances)

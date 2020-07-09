@@ -3,9 +3,10 @@ package state
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"sync"
+
 	"github.io/hashgraph/stable-coin/data"
 	"github.io/hashgraph/stable-coin/domain"
-	"sync"
 )
 
 // username -> balance
@@ -25,12 +26,14 @@ var Frozen = sync.Map{}
 
 // pending new users (usernames)
 var pendingNewUser []string
+var pendingNewUserLock sync.Mutex
 
 // pending freezes (user, status)
 var pendingFreezes = map[string]bool{}
 
 // pending balance changes
 var pendingBalances = map[string]uint64{}
+var pendingBalancesLock sync.Mutex
 
 // pending operations to be committed to the database
 var pendingOperations []domain.Operation
@@ -59,7 +62,9 @@ func AddUser(username string, publicKey ed25519.PublicKey) {
 	Frozen.Store(username, false)
 
 	// on the next commit, add the user
+	pendingNewUserLock.Lock()
 	pendingNewUser = append(pendingNewUser, username)
+	pendingNewUserLock.Unlock()
 }
 
 // UpdateBalance updates the balance for a user and ensures that
@@ -70,7 +75,9 @@ func UpdateBalance(userName string, update func(uint64) uint64) {
 	v, _ = Balance.Load(userName)
 
 	// on the next commit, update our balance
+	pendingBalancesLock.Lock()
 	pendingBalances[userName] = v.(uint64)
+	pendingBalancesLock.Unlock()
 }
 
 // UpdateFrozen updates the frozen status for a user and ensures that
