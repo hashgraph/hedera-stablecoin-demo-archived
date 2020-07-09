@@ -33,11 +33,10 @@ func Run() {
 	e.GET("/v1/token", routes.GetToken)
 	e.GET("/v1/token/userExists/:username", routes.GetUserExists)
 	e.GET("/v1/token/balance/:username", routes.GetUserBalanceByAddress)
-	//e.GET("/v1/token/frozenUsers/:userToExclude", routes.)
-	//e.GET("/v1/token/unfrozenUsers/:userToExclude", routes.)
+	e.GET("/v1/token/frozenUsers/:frozen", routes.GetUsersByFrozenStatus)
 	e.GET("/v1/token/operations/:username", routes.GetUserOperationsByUsername)
 	e.GET("/v1/token/usersSearch/:username", routes.GetUsersByPartialMatch)
-
+	e.GET("/v1/token/isAdminUser/:publicKey", routes.IsAdminUser)
 	e.GET("/ws", notification.Handler)
 
 	err := e.Start(":" + os.Getenv("MIRROR_PORT"))
