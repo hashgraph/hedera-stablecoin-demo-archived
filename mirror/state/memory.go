@@ -20,8 +20,14 @@ var User = sync.Map{}
 // var Address = map[string]string{}
 var Address = sync.Map{}
 
+// frozen (username) -> boolean
+var Frozen = sync.Map{}
+
 // pending new users (usernames)
 var pendingNewUser []string
+
+// pending freezes (user, status)
+var pendingFreezes = map[string]bool{}
 
 // pending balance changes
 var pendingBalances = map[string]uint64{}
@@ -41,6 +47,7 @@ func init() {
 		Balance.Store(row.Username, uint64(row.Balance))
 		User.Store(row.Username, ed25519.PublicKey(row.PublicKey))
 		Address.Store(hex.EncodeToString(row.PublicKey), row.Username)
+		Frozen.Store(row.Username, row.Frozen)
 	}
 }
 
@@ -49,6 +56,7 @@ func AddUser(username string, publicKey ed25519.PublicKey) {
 	Balance.Store(username, uint64(0))
 	User.Store(username, publicKey)
 	Address.Store(hex.EncodeToString(publicKey), username)
+	Frozen.Store(username, false)
 
 	// on the next commit, add the user
 	pendingNewUser = append(pendingNewUser, username)
@@ -63,6 +71,17 @@ func UpdateBalance(userName string, update func(uint64) uint64) {
 
 	// on the next commit, update our balance
 	pendingBalances[userName] = v.(uint64)
+}
+
+// UpdateFrozen updates the frozen status for a user and ensures that
+// it is eventually persisted
+func UpdateFrozen(userName string, update func(bool) bool) {
+	v, _ := Frozen.Load(userName)
+	Frozen.Store(userName, update(v.(bool)))
+	v, _ = Frozen.Load(userName)
+
+	// on the next commit, update the frozen status
+	pendingFreezes[userName] = v.(bool)
 }
 
 // AddOperation adds an operation to the pending store to be committed on the commit interval
