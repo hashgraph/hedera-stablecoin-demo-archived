@@ -7,7 +7,6 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/rs/zerolog"
 	"github.com/ziflex/lecho/v2"
-	"github.io/hashgraph/stable-coin/api/notification"
 	"github.io/hashgraph/stable-coin/api/routes"
 	"os"
 )
@@ -41,8 +40,6 @@ func main() {
 	e.POST("/v1/token/join", routes.SendAnnounce)
 	e.POST("/v1/token/mintTo", routes.SendMint)
 	e.POST("/v1/token/transaction", routes.SendRawTransaction)
-
-	e.GET("/ws", notification.Handler)
 
 	// NOTE: Runs on :8080 by default but can be overridden by $PORT
 	err := e.Start(":" + os.Getenv("PORT"))

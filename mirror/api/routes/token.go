@@ -10,11 +10,13 @@ import (
 var tokenDecimals int
 var tokenSymbol string
 var tokenName string
+var topicId string
 
 type tokenMeta struct {
 	Name     string `json:"name"`
 	Symbol   string `json:"symbol"`
 	Decimals int    `json:"decimals"`
+	TopicId  string `json:"topicId"`
 }
 
 func getTokenMeta() tokenMeta {
@@ -27,12 +29,14 @@ func getTokenMeta() tokenMeta {
 
 		tokenName = os.Getenv("TOKEN_NAME")
 		tokenSymbol = os.Getenv("SYMBOL")
+		topicId = os.Getenv("TOPIC_ID")
 	}
 
 	return tokenMeta{
 		Name:     tokenName,
 		Symbol:   tokenSymbol,
 		Decimals: tokenDecimals,
+		TopicId: topicId,
 	}
 }
 

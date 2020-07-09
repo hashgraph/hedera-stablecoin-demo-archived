@@ -1,13 +1,13 @@
 package data
 
-func GetUserBalanceByAddress(publicKey []byte) (int64, bool, error) {
+func GetUserBalanceByUsername(username string) (int64, bool, error) {
 	var balance int64 = 0
 	var frozen bool = false
 	err := db.QueryRow(`
 SELECT balance, frozen
 FROM address
-WHERE public_key = $1
-	`, publicKey).Scan(&balance, &frozen)
+WHERE username = $1
+	`, username).Scan(&balance, &frozen)
 
 	return balance, frozen, err
 }

@@ -5,7 +5,7 @@ import App from './App'
 import router from './router'
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 import VueSimpleWebSocket from 'vue-simple-websocket'
-//TODO: review once go support enabled
+// TODO: review once go support enabled
 Vue.use(VueSimpleWebSocket, 'ws://' + window.location.hostname + ':' + process.env.GET_PORT + '/ws', {
   reconnectEnabled: true,
   reconnectInterval: 5000

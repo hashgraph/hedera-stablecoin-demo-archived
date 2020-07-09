@@ -221,7 +221,7 @@
             </v-card-title>
             <v-card-text>
               <v-container>
-                <v-form v-model="sendValid">
+                <v-form>
                   <v-container
                     fill-height
                     fluid>
@@ -237,13 +237,20 @@
                     </v-row>
                     <v-row>
                       <v-col>
-                        <v-select
+                        <v-autocomplete
                           v-model="sendRecipient"
                           :items="sendToList"
+                          :loading="isLoading"
+                          :search-input.sync="search"
+                          hide-no-data
+                          hide-selected
+                          item-text="Description"
                           label="Send to"
-                          :rules="[(v) => !!v || 'Recipient is required']"
+                          placeholder="Start typing to Search"
+                          return-object
                           required
-                        ></v-select>
+                          :rules="[(v) => !!v || 'Recipient is required']"
+                        ></v-autocomplete>
                       </v-col>
                     </v-row>
                   </v-container>
@@ -282,6 +289,9 @@
         getRestAPI: 'http://' + window.location.hostname + ':' + process.env.GET_PORT,
         postRestAPI: 'http://' + window.location.hostname + ':' + process.env.POST_PORT,
         inProgress: false,
+        isLoading: false,
+        search: null,
+        sendRecipient: null,
         balance: 0,
         tokenName: Cookie.get('tokenName'),
         buyDialog: false,
@@ -289,12 +299,9 @@
         sendDialog: false,
         buyValid: false,
         sellValid: false,
-        sendValid: false,
         buyQuantity: 0,
         sellQuantity: 0,
         sendQuantity: 0,
-        sendToList: [],
-        sendRecipient: '',
         address: '',
         quantityRules: [
           v => v.toString().length > 0 || 'Amount is required',
@@ -303,10 +310,25 @@
         ],
         userName: Cookie.get('userName'),
         operations: [],
-        frozen: 0
+        frozen: 0,
+        entries: []
       }
     },
     computed: {
+      sendValid () {
+        let valid = (this.sendQuantity.toString().length > 0)
+        valid = valid && (parseInt(this.sendQuantity).toString() === this.sendQuantity)
+        valid = valid && (this.sendQuantity.valueOf() >= 1)
+        valid = valid && (this.sendRecipient !== '')
+        valid = valid && (this.sendRecipient !== null)
+        return valid
+      },
+      sendToList () {
+        return this.entries.map(entry => {
+          const Description = entry
+          return Object.assign({}, entry, { Description })
+        })
+      },
       accountTitle () {
         return Cookie.get('userName') + '\'s accounts'
       },
@@ -315,6 +337,36 @@
           return this.balance + ' (frozen)'
         } else {
           return this.balance
+        }
+      }
+    },
+    watch: {
+      search (val) {
+        // Items have already been loaded
+        if (this.sendToList.length > 0) {
+          this.entries = []
+        }
+
+        // Items have already been requested
+        if (this.isLoading) return
+
+        this.isLoading = true
+
+        if (val !== '') {
+          // Lazily load input items
+          axios.get(this.getRestAPI.concat('/v1/token/usersSearch/' + val))
+            .then(response => {
+              if (response.data !== null) {
+                this.entries = response.data
+              }
+            })
+            .catch(e => {
+              console.log(e)
+            })
+            .finally(() => (this.isLoading = false))
+        } else {
+          this.isLoading = false
+          this.sendRecipient = null
         }
       }
     },
@@ -340,10 +392,6 @@
         .then(balance => {
           this.balance = balance.balance
           this.frozen = balance.frozen
-        })
-      Utils.getUsers()
-        .then(users => {
-          this.sendToList = users
         })
 
       this.getOperations()
@@ -451,7 +499,7 @@
                 operation.textColor = 'green--text'
               } else {
                 operation.textColor = 'deep-orange--text'
-                operation.operationDetail = obj.failure_reason.replace('E: ', '')
+                operation.operationDetail = obj.statusMessage
               }
               operation.id = obj.id
               this.operations.push(operation)
@@ -530,7 +578,7 @@
           const body = {}
 
           const transferProto = new Proto.Transfer()
-          transferProto.setToAddress(this.sendRecipient)
+          transferProto.setToAddress(this.sendRecipient.Description)
           transferProto.setQuantity(this.sendQuantity)
 
           let primitive = new Proto.Primitive()

@@ -89,7 +89,7 @@ func startListening() error {
 
 	_, err = hedera.NewMirrorConsensusTopicQuery().
 		SetTopicID(topicID).
-		SetStartTime(startTime.Add(1*time.Second)).
+		SetStartTime(startTime.Add(1 * time.Nanosecond)).
 		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
 			listenAttempts = 0
 
