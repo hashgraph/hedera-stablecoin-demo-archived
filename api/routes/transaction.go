@@ -65,7 +65,7 @@ func init() {
 
 	// parse the admin key for token operations on the network
 
-	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ADMIN_KEY"))
+	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ISSUER_PRIVATE_KEY"))
 	if err != nil {
 		panic(err)
 	}
