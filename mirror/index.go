@@ -212,6 +212,16 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 
 		op, err = operation.Transfer(primitivePublicKey, v)
 
+	case *pb.Primitive_Burn:
+		v := primitive.GetBurn()
+
+		err = verify(primitive.Header, v, primitivePublicKey)
+		if err != nil {
+			return err
+		}
+
+		op, err = operation.Burn(primitivePublicKey, v)
+
 	default:
 		err = fmt.Errorf("unimplemented operation: %T", primitive.Primitive)
 	}
