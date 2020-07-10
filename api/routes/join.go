@@ -27,14 +27,14 @@ func SendAnnounce(c echo.Context) error {
 	err = sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
 
 	if err != nil {
-		return c.JSON(http.StatusAccepted, transactionResponse{
-			Status:  true,
-			Message: "Join request sent",
-		})
-	} else {
 		return c.JSON(http.StatusInternalServerError, transactionResponse{
 			Status:  false,
 			Message: err.Error(),
+		})
+	} else {
+		return c.JSON(http.StatusAccepted, transactionResponse{
+			Status:  true,
+			Message: "Join request sent",
 		})
 	}
 }
