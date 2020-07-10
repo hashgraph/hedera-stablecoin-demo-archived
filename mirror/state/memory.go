@@ -3,6 +3,7 @@ package state
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"github.com/hashgraph/hedera-sdk-go"
 	"sync"
 
 	"github.io/hashgraph/stable-coin/data"
@@ -30,6 +31,11 @@ var pendingNewUserLock sync.Mutex
 
 // pending freezes (user, status)
 var pendingFreezes = map[string]bool{}
+var pendingFreezesLock sync.Mutex
+
+// pending key updates (old key)
+var pendingKeyUpdates = map[string]ed25519.PublicKey{}
+var pendingKeyUpdatesLock sync.Mutex
 
 // pending balance changes
 var pendingBalances = map[string]uint64{}
@@ -80,6 +86,24 @@ func UpdateBalance(userName string, update func(uint64) uint64) {
 	pendingBalancesLock.Unlock()
 }
 
+// UpdateAdminKey updates the public key for the admin user and ensures that
+// it is eventually persisted
+func UpdateAdminKey(oldAdminAddress string, update func(ed25519.PublicKey) ed25519.PublicKey) {
+	v, _ := User.Load("Admin")
+	// replace the key for the Admin user
+	publicKey, _ := hedera.Ed25519PublicKeyFromBytes(update(v.(ed25519.PublicKey)))
+	User.Store("Admin", update(v.(ed25519.PublicKey)))
+	// delete the old key entry
+	Address.Delete(oldAdminAddress)
+	// create an entry for the new one
+	Address.Store(hex.EncodeToString(update(v.(ed25519.PublicKey))), "Admin")
+
+	// on the next commit, update the frozen status
+	pendingKeyUpdatesLock.Lock()
+	pendingKeyUpdates[oldAdminAddress] = publicKey.Bytes()
+	pendingKeyUpdatesLock.Unlock()
+}
+
 // UpdateFrozen updates the frozen status for a user and ensures that
 // it is eventually persisted
 func UpdateFrozen(userName string, update func(bool) bool) {
@@ -88,7 +112,9 @@ func UpdateFrozen(userName string, update func(bool) bool) {
 	v, _ = Frozen.Load(userName)
 
 	// on the next commit, update the frozen status
+	pendingFreezesLock.Lock()
 	pendingFreezes[userName] = v.(bool)
+	pendingFreezesLock.Unlock()
 }
 
 // AddOperation adds an operation to the pending store to be committed on the commit interval

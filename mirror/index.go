@@ -251,11 +251,14 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 			adminPubKey := []byte(adminPubKeyI.(ed25519.PublicKey))
 
 			if bytes.Compare(adminPubKey, primitiveHederaPublicKey.Bytes()) != 0 {
-				adminPubKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
+				primitivePublicKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
+				adminPubKeyHex := hex.EncodeToString(adminPubKey)
+				fmt.Println(adminPubKeyHex)
+				fmt.Println(primitivePublicKeyHex)
 				op = domain.Operation{
 					Operation:     domain.OpFreeze,
 					Status:        domain.OpStatusFailed,
-					StatusMessage: fmt.Sprintf("invalid admin key `%s`", adminPubKeyHex),
+					StatusMessage: fmt.Sprintf("invalid admin key `%s`", primitivePublicKeyHex),
 				}
 			} else {
 				err = verify(primitive.Header, v, primitivePublicKey)
@@ -328,6 +331,38 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 				}
 
 				op, err = operation.Clawback(v)
+			}
+		}
+
+	case *pb.Primitive_AdminKeyUpdate:
+		v := primitive.GetAdminKeyUpdate()
+		// get admin key
+		var adminPubKeyI interface{}
+		var exists bool
+		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+			op = domain.Operation{
+				Operation:     domain.OpAdminKeyUpdate,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: "username Admin does not exist",
+			}
+		} else {
+			// admin user exists, check public keys match
+			adminPubKey := []byte(adminPubKeyI.(ed25519.PublicKey))
+
+			if bytes.Compare(adminPubKey, primitiveHederaPublicKey.Bytes()) != 0 {
+				adminPubKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
+				op = domain.Operation{
+					Operation:     domain.OpAdminKeyUpdate,
+					Status:        domain.OpStatusFailed,
+					StatusMessage: fmt.Sprintf("invalid admin key `%s`", adminPubKeyHex),
+				}
+			} else {
+				err = verify(primitive.Header, v, primitivePublicKey)
+				if err != nil {
+					return err
+				}
+
+				op, err = operation.AdminKeyUpdate(primitivePublicKey, v.NewPublicKey)
 			}
 		}
 

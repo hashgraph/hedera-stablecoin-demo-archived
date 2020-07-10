@@ -1,6 +1,7 @@
 package state
 
 import (
+	"crypto/ed25519"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -30,6 +31,7 @@ func commit() {
 	numBalances := 0
 	numUsers := 0
 	numFreezes := 0
+	numKeyUpdates := 0
 
 	if len(pendingNewUser) > 0 {
 		pendingNewUserLock.Lock()
@@ -87,11 +89,13 @@ func commit() {
 
 	if len(pendingFreezes) > 0 {
 		// there are pending freezes that should be committed
+		pendingFreezesLock.Lock()
 		freezes := pendingFreezes
 		numFreezes = len(freezes)
 
 		// erase current maps
 		pendingFreezes = map[string]bool{}
+		pendingFreezesLock.Unlock()
 
 		// update the balance records
 		err := data.UpdateUserFrozenStatus(freezes)
@@ -100,13 +104,31 @@ func commit() {
 		}
 	}
 
-	if numOperations > 0 || numBalances > 0 || numFreezes > 0 {
+	if len(pendingKeyUpdates) > 0 {
+		// there are pending key updates that should be committed
+		pendingKeyUpdatesLock.Lock()
+		keyUpdates := pendingKeyUpdates
+		numKeyUpdates = len(keyUpdates)
+
+		// erase current maps
+		pendingKeyUpdates = map[string]ed25519.PublicKey{}
+		pendingKeyUpdatesLock.Unlock()
+
+		// update the address records
+		err := data.UpdateKeys(keyUpdates)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if numOperations > 0 || numBalances > 0 || numFreezes > 0 || numKeyUpdates > 0{
 		log.Info().
 			Dur("elapsed", time.Since(start)).
 			Int("operations", numOperations).
 			Int("users", numUsers).
 			Int("balances", numBalances).
 			Int("freezes", numFreezes).
+			Int("key updates", numKeyUpdates).
 			Msg("Commit")
 	}
 }
