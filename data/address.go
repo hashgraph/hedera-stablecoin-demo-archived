@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"crypto/ed25519"
+	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.io/hashgraph/stable-coin/domain"
@@ -11,7 +12,7 @@ import (
 
 func GetAllAddress() ([]domain.Address, error) {
 	var r []domain.Address
-	err := db.Select(&r, "SELECT username, balance, public_key FROM address")
+	err := db.Select(&r, "SELECT username, balance, public_key, frozen FROM address")
 
 	return r, err
 }
@@ -58,6 +59,26 @@ func UpdateUserFrozenStatus(users map[string]bool) error {
 
 	for userName, frozen := range users {
 		_, err := tx.Exec("UPDATE address SET frozen = $1 WHERE username = $2", frozen, userName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func UpdateKeys(keys map[string]ed25519.PublicKey) error {
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	for oldKey, newKey := range keys {
+		oldKeyBytes, _ := hedera.Ed25519PublicKeyFromString(oldKey)
+
+		_, err := tx.Exec("UPDATE address SET public_key = $1 WHERE public_key = $2", newKey, oldKeyBytes.Bytes())
 		if err != nil {
 			return err
 		}
