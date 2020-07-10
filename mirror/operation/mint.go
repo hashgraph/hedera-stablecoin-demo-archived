@@ -23,6 +23,20 @@ func Mint(payload *pb.MintTo) (domain.Operation, error) {
 		}, nil
 	}
 
+	userPublicKey, _ := state.User.Load(payload.Address)
+	userPublicKeyBytes := []byte(userPublicKey.(ed25519.PublicKey))
+
+	if frozenUserI, exists := state.Frozen.Load(payload.Address); exists {
+		if frozenUserI.(bool) == true {
+			return domain.Operation{
+				Operation:     domain.OpMint,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: fmt.Sprintf("user `%s` is frozen", payload.Address),
+				ToAddress:   &userPublicKeyBytes,
+			}, nil
+		}
+	}
+
 	// TODO: Handle response to the UI
 
 	// FIXME: UI sends the username where it calls it the address
@@ -30,9 +44,6 @@ func Mint(payload *pb.MintTo) (domain.Operation, error) {
 	state.UpdateBalance(payload.Address, func(balance uint64) uint64 {
 		return balance + payload.Quantity
 	})
-
-	userPublicKey, _ := state.User.Load(payload.Address)
-	userPublicKeyBytes := []byte(userPublicKey.(ed25519.PublicKey))
 
 	return domain.Operation{
 		Operation: domain.OpMint,

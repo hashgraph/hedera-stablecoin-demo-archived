@@ -44,6 +44,30 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 	toAddressI, _ := state.User.Load(payload.ToAddress)
 	toAddress := []byte(toAddressI.(ed25519.PublicKey))
 
+	if frozenUserI, exists := state.Frozen.Load(senderUserName); exists {
+		if frozenUserI.(bool) == true {
+			return domain.Operation{
+				Operation:     domain.OpTransfer,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: fmt.Sprintf("paying user `%s` is frozen", senderUserName),
+				FromAddress:   &senderAddress,
+				ToAddress:     &toAddress,
+			}, nil
+		}
+	}
+
+	if frozenUserI, exists := state.Frozen.Load(payload.ToAddress); exists {
+		if frozenUserI.(bool) == true {
+			return domain.Operation{
+				Operation:     domain.OpTransfer,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: fmt.Sprintf("receiving user `%s` is frozen", payload.ToAddress),
+				FromAddress:   &senderAddress,
+				ToAddress:     &toAddress,
+			}, nil
+		}
+	}
+
 	senderBalanceI, _ := state.Balance.Load(senderUserName)
 	senderBalance := senderBalanceI.(uint64)
 

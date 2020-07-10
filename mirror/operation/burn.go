@@ -40,6 +40,17 @@ func Burn(senderAddress []byte, payload *pb.Burn) (domain.Operation, error) {
 		}, nil
 	}
 
+	if frozenUserI, exists := state.Frozen.Load(senderUserName); exists {
+		if frozenUserI.(bool) == true {
+			return domain.Operation{
+				Operation:     domain.OpRedeem,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: fmt.Sprintf("user `%s` is frozen", senderUserName),
+				FromAddress:   &senderAddress,
+			}, nil
+		}
+	}
+
 	senderBalanceI, _ := state.Balance.Load(senderUserName)
 	senderBalance := senderBalanceI.(uint64)
 
