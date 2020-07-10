@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
@@ -61,6 +63,17 @@ func main() {
 	mirrorClient, err = hedera.NewMirrorClient(os.Getenv("HEDERA_MIRROR_NODE"))
 	if err != nil {
 		panic(err)
+	}
+
+	// add the admin user if missing
+	if _, exists := state.User.Load("Admin"); ! exists {
+
+		adminPublicKey, err := hedera.Ed25519PublicKeyFromString(os.Getenv("ADMIN_PUBLIC_KEY"))
+		if err != nil {
+			panic(err)
+		}
+
+		state.AddUser("Admin", adminPublicKey.Bytes())
 	}
 
 	// start the mirror listener
@@ -211,6 +224,147 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		}
 
 		op, err = operation.Transfer(primitivePublicKey, v)
+
+	case *pb.Primitive_Burn:
+		v := primitive.GetBurn()
+
+		err = verify(primitive.Header, v, primitivePublicKey)
+		if err != nil {
+			return err
+		}
+
+		op, err = operation.Burn(primitivePublicKey, v)
+
+	case *pb.Primitive_Freeze:
+		v := primitive.GetFreeze()
+		// get admin key
+		var adminPubKeyI interface{}
+		var exists bool
+		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+			op = domain.Operation{
+				Operation:     domain.OpFreeze,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: "username Admin does not exist",
+			}
+		} else {
+			// admin user exists, check public keys match
+			adminPubKey := []byte(adminPubKeyI.(ed25519.PublicKey))
+
+			if bytes.Compare(adminPubKey, primitiveHederaPublicKey.Bytes()) != 0 {
+				primitivePublicKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
+				adminPubKeyHex := hex.EncodeToString(adminPubKey)
+				fmt.Println(adminPubKeyHex)
+				fmt.Println(primitivePublicKeyHex)
+				op = domain.Operation{
+					Operation:     domain.OpFreeze,
+					Status:        domain.OpStatusFailed,
+					StatusMessage: fmt.Sprintf("invalid admin key `%s`", primitivePublicKeyHex),
+				}
+			} else {
+				err = verify(primitive.Header, v, primitivePublicKey)
+				if err != nil {
+					return err
+				}
+
+				op, err = operation.Freeze(primitivePublicKey, v.Account, true)
+			}
+		}
+
+	case *pb.Primitive_Unfreeze:
+		v := primitive.GetUnfreeze()
+		// get admin key
+		var adminPubKeyI interface{}
+		var exists bool
+		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+			op = domain.Operation{
+				Operation:     domain.OpUnFreeze,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: "username Admin does not exist",
+			}
+		} else {
+			// admin user exists, check public keys match
+			adminPubKey := []byte(adminPubKeyI.(ed25519.PublicKey))
+
+			if bytes.Compare(adminPubKey, primitiveHederaPublicKey.Bytes()) != 0 {
+				adminPubKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
+				op = domain.Operation{
+					Operation:     domain.OpUnFreeze,
+					Status:        domain.OpStatusFailed,
+					StatusMessage: fmt.Sprintf("invalid admin key `%s`", adminPubKeyHex),
+				}
+			} else {
+				err = verify(primitive.Header, v, primitivePublicKey)
+				if err != nil {
+					return err
+				}
+
+				op, err = operation.Freeze(primitivePublicKey, v.Account, false)
+			}
+		}
+
+	case *pb.Primitive_Clawback:
+		v := primitive.GetClawback()
+		// get admin key
+		var adminPubKeyI interface{}
+		var exists bool
+		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+			op = domain.Operation{
+				Operation:     domain.OpClawback,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: "username Admin does not exist",
+			}
+		} else {
+			// admin user exists, check public keys match
+			adminPubKey := []byte(adminPubKeyI.(ed25519.PublicKey))
+
+			if bytes.Compare(adminPubKey, primitiveHederaPublicKey.Bytes()) != 0 {
+				adminPubKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
+				op = domain.Operation{
+					Operation:     domain.OpClawback,
+					Status:        domain.OpStatusFailed,
+					StatusMessage: fmt.Sprintf("invalid admin key `%s`", adminPubKeyHex),
+				}
+			} else {
+				err = verify(primitive.Header, v, primitivePublicKey)
+				if err != nil {
+					return err
+				}
+
+				op, err = operation.Clawback(v)
+			}
+		}
+
+	case *pb.Primitive_AdminKeyUpdate:
+		v := primitive.GetAdminKeyUpdate()
+		// get admin key
+		var adminPubKeyI interface{}
+		var exists bool
+		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+			op = domain.Operation{
+				Operation:     domain.OpAdminKeyUpdate,
+				Status:        domain.OpStatusFailed,
+				StatusMessage: "username Admin does not exist",
+			}
+		} else {
+			// admin user exists, check public keys match
+			adminPubKey := []byte(adminPubKeyI.(ed25519.PublicKey))
+
+			if bytes.Compare(adminPubKey, primitiveHederaPublicKey.Bytes()) != 0 {
+				adminPubKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
+				op = domain.Operation{
+					Operation:     domain.OpAdminKeyUpdate,
+					Status:        domain.OpStatusFailed,
+					StatusMessage: fmt.Sprintf("invalid admin key `%s`", adminPubKeyHex),
+				}
+			} else {
+				err = verify(primitive.Header, v, primitivePublicKey)
+				if err != nil {
+					return err
+				}
+
+				op, err = operation.AdminKeyUpdate(primitivePublicKey, v.NewPublicKey)
+			}
+		}
 
 	default:
 		err = fmt.Errorf("unimplemented operation: %T", primitive.Primitive)

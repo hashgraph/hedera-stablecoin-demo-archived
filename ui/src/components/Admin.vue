@@ -43,9 +43,9 @@
               <v-container
                 fill-height
                 fluid>
-                <v-row dense v-for="user in users" :key="user.text">
+                <v-row dense v-for="user in users" :key="user.username">
                   <v-col>
-                    <v-checkbox v-model="list" :label="user.text" :value="user.text"></v-checkbox>
+                    <v-checkbox v-model="list" :label="user.username" :value="user.username"></v-checkbox>
                   </v-col>
                 </v-row>
               </v-container>
@@ -74,9 +74,9 @@
             <v-container
               fill-height
               fluid>
-              <v-row dense v-for="user in users" :key="user.text">
+              <v-row dense v-for="user in users" :key="user.username">
                 <v-col>
-                  <v-checkbox v-model="list" :label="user.text" :value="user.text"></v-checkbox>
+                  <v-checkbox v-model="list" :label="user.username" :value="user.username"></v-checkbox>
                 </v-col>
               </v-row>
             </v-container>
@@ -105,9 +105,9 @@
             <v-container
               fill-height
               fluid>
-              <v-row dense v-for="user in users" :key="user.text">
+              <v-row dense v-for="user in users" :key="user.username">
                 <v-col>
-                  <v-checkbox v-model="list" :label="user.text" :value="user.text"></v-checkbox>
+                  <v-checkbox v-model="list" :label="user.username" :value="user.username"></v-checkbox>
                 </v-col>
               </v-row>
             </v-container>
@@ -228,9 +228,9 @@
         this.list = []
         let url = ''
         if (this.getFrozen) {
-          url = this.getRestAPI.concat('/v1/token/users/frozen')
+          url = this.getRestAPI.concat('/v1/token/frozenUsers/true')
         } else {
-          url = this.getRestAPI.concat('/v1/token/users/unfrozen')
+          url = this.getRestAPI.concat('/v1/token/frozenUsers/false')
         }
 
         axios.get(url)

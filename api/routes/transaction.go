@@ -65,7 +65,7 @@ func init() {
 
 	// parse the admin key for token operations on the network
 
-	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ADMIN_KEY"))
+	adminHederaPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("ISSUER_PRIVATE_KEY"))
 	if err != nil {
 		panic(err)
 	}
@@ -108,22 +108,32 @@ func SendRawTransaction(c echo.Context) error {
 	}
 
 	err := c.Bind(&req)
-	if err == nil {
-		primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
-		if err == nil {
-			err = sendRaw(primitive)
-		}
-	}
-
-	if err == nil {
-		return c.JSON(http.StatusAccepted, transactionResponse{
-			Status:  true,
-			Message: "raw transaction request sent",
-		})
-	} else {
+	if err != nil {
 		return c.JSON(http.StatusInternalServerError, transactionResponse{
 			Status:  false,
 			Message: err.Error(),
+		})
+	}
+
+	primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, transactionResponse{
+			Status:  false,
+			Message: err.Error(),
+		})
+	}
+
+	err = sendRaw(primitive)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, transactionResponse{
+			Status:  false,
+			Message: err.Error(),
+		})
+	} else {
+		return c.JSON(http.StatusAccepted, transactionResponse{
+			Status:  true,
+			Message: "raw transaction request sent",
 		})
 	}
 }

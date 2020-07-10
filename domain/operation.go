@@ -7,6 +7,10 @@ const (
 	OpMint     Op = "mint"
 	OpTransfer Op = "transfer"
 	OpRedeem   Op = "redeem"
+	OpFreeze   Op = "freeze"
+	OpUnFreeze Op = "unfreeze"
+	OpClawback   Op = "clawback"
+	OpAdminKeyUpdate Op = "adminkeyupdate"
 )
 
 type OpStatus string

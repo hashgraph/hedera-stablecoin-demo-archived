@@ -47,8 +47,10 @@ func Announce(payload *pb.Join) (domain.Operation, error) {
 
 	state.AddUser(payload.Username, publicKey.Bytes())
 
+	userPublicKeyBytes := []byte(publicKey.Bytes())
 	return domain.Operation{
 		Operation: domain.OpAnnounce,
 		Status:    domain.OpStatusComplete,
+		ToAddress: &userPublicKeyBytes,
 	}, nil
 }
