@@ -108,22 +108,32 @@ func SendRawTransaction(c echo.Context) error {
 	}
 
 	err := c.Bind(&req)
-	if err == nil {
-		primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
-		if err == nil {
-			err = sendRaw(primitive)
-		}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, transactionResponse{
+			Status:  false,
+			Message: err.Error(),
+		})
 	}
 
-	if err == nil {
-		return c.JSON(http.StatusAccepted, transactionResponse{
-			Status:  true,
-			Message: "raw transaction request sent",
-		})
+	primitive, err := base64.StdEncoding.DecodeString(req.Primitive)
+	if err != nil {
+		err = sendRaw(primitive)
 	} else {
 		return c.JSON(http.StatusInternalServerError, transactionResponse{
 			Status:  false,
 			Message: err.Error(),
+		})
+	}
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, transactionResponse{
+			Status:  false,
+			Message: err.Error(),
+		})
+	} else {
+		return c.JSON(http.StatusAccepted, transactionResponse{
+			Status:  true,
+			Message: "raw transaction request sent",
 		})
 	}
 }

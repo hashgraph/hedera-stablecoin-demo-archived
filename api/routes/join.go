@@ -14,15 +14,19 @@ func SendAnnounce(c echo.Context) error {
 
 	err := c.Bind(&req)
 
-	if err == nil {
-		v := &pb.Join{
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, transactionResponse{
+			Status:  false,
+			Message: err.Error(),
+		})
+	}
+	v := &pb.Join{
 			Address:  req.PublicKey,
 			Username: req.Username,
 		}
-		err = sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
-	}
+	err = sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
 
-	if err == nil {
+	if err != nil {
 		return c.JSON(http.StatusAccepted, transactionResponse{
 			Status:  true,
 			Message: "Join request sent",
