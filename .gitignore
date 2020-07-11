@@ -1,2 +1,7 @@
 .env
 .idea/
+e2eTesting/stabl-test/*.csv
+e2eTesting/stabl-test/meter.log
+**/target/
+*-log.txt
+*-detail.txt
