@@ -5,3 +5,4 @@ e2eTesting/stabl-test/meter.log
 **/target/
 *-log.txt
 *-detail.txt
+e2eTesting/token-perf-tests.iml

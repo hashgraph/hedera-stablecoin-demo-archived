@@ -340,6 +340,7 @@ public class End2End {
         String sendPrimitive = Primitives.sendPrimitive(usernames.get(userToSendTo), privateKey, publicKey);
         RESTPrimitive restPrimitive = new RESTPrimitive(sendPrimitive);
         Instant startTime = Instant.now();
+        long currentBalance = balance(usernames.get(userToSendTo));
         if (postPrimitive(restPrimitive)) {
             long duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
             System.out.print(startTime + " Transfer api (" + duration + ")");
@@ -349,7 +350,7 @@ public class End2End {
                 queryCount += 1;
                 Thread.sleep(1000);
                 long callTime = Instant.now().getEpochSecond();
-                if (balance(publicKey.toString()) != initialBalance) {
+                if (balance(usernames.get(userToSendTo)) != currentBalance) {
                     duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
                     callTime = Instant.now().getEpochSecond() - callTime;
                     sendStats.setValues(duration);
