@@ -257,9 +257,6 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 
 			if bytes.Compare(adminPubKey, primitiveHederaPublicKey.Bytes()) != 0 {
 				primitivePublicKeyHex := hex.EncodeToString(primitiveHederaPublicKey.Bytes())
-				adminPubKeyHex := hex.EncodeToString(adminPubKey)
-				fmt.Println(adminPubKeyHex)
-				fmt.Println(primitivePublicKeyHex)
 				op = domain.Operation{
 					Operation:     domain.OpFreeze,
 					Status:        domain.OpStatusFailed,
