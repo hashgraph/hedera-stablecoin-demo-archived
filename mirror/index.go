@@ -93,14 +93,16 @@ func startListening() error {
 	startTime, err := data.GetLatestOperationConsensus()
 
 	if err == sql.ErrNoRows {
-		startTime = time.Now()
+		startTime = time.Unix(0, 0)
 	} else if err != nil {
 		return err
+	} else {
+		startTime = startTime.Add(1 * time.Nanosecond)
 	}
 
 	_, err = hedera.NewMirrorConsensusTopicQuery().
 		SetTopicID(topicID).
-		SetStartTime(startTime.Add(1*time.Nanosecond)).
+		SetStartTime(startTime).
 		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
 			listenAttempts = 0
 

@@ -1,9 +1,10 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.io/hashgraph/stable-coin/pb"
-	"net/http"
 )
 
 func SendAnnounce(c echo.Context) error {
@@ -20,10 +21,12 @@ func SendAnnounce(c echo.Context) error {
 			Message: err.Error(),
 		})
 	}
+
 	v := &pb.Join{
-			Address:  req.PublicKey,
-			Username: req.Username,
-		}
+		Address:  req.PublicKey,
+		Username: req.Username,
+	}
+
 	err = sendTransaction(v, &pb.Primitive{Primitive: &pb.Primitive_Join{Join: v}})
 
 	if err != nil {
