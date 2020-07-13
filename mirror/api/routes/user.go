@@ -32,14 +32,14 @@ func GetUsersByFrozenStatus(c echo.Context) error {
 func GetUsersByPartialMatch(c echo.Context) error {
 	userNames := []string{}
 
-	searchValue := c.Param("username")
+	searchValue := strings.ToUpper(c.Param("username"))
 
 	if searchValue != "" {
 
 		state.Address.Range(func(addressI, userNameI interface{}) bool {
 			userName := userNameI.(string)
 
-			if strings.Contains(userName, searchValue) {
+			if strings.Contains(strings.ToUpper(userName), searchValue) {
 				userNames = append(userNames, userName)
 			}
 
