@@ -436,7 +436,7 @@
                   operation.operationDetail = ''
                   operation.amount = '+' + obj.amount
                   break
-                case 'join':
+                case 'announce':
                   operation.icon = 'mdi-set-center'
                   operation.iconColor = 'green darken-2'
                   operation.operation = 'Joined token'
