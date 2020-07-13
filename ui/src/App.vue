@@ -46,14 +46,13 @@ export default {
     }
     this.$socketClient.onMessage = (msg) => {
       this.snackbar = false
-      const message = JSON.parse(msg.data)
-
-      if (message.startsWith('E:')) {
+      const notification = JSON.parse(msg.data)
+      if (notification.error) {
         this.snackAlert = 'error'
       } else {
         this.snackAlert = 'success'
       }
-      this.snackMessage = message
+      this.snackMessage = notification.message
       this.snackbar = true
       bus.$emit('refresh')
     }
@@ -66,14 +65,14 @@ export default {
   },
   mounted () {
     bus.$on('showSuccess', (message) => {
-      this.snackbar = true
       this.snackAlert = 'success'
       this.snackMessage = message
+      this.snackbar = true
     })
     bus.$on('showError', (message) => {
-      this.snackbar = true
       this.snackAlert = 'error'
       this.snackMessage = message
+      this.snackbar = true
     })
     bus.$on('hideSnackbar', () => {
       this.snackbar = false
