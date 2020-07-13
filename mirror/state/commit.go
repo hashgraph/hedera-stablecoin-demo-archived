@@ -20,7 +20,7 @@ func init() {
 	go func() {
 		for {
 			time.Sleep(commitIntervalDur)
-			go commit()
+			commit()
 		}
 	}()
 }
