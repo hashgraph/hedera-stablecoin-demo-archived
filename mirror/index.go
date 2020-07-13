@@ -93,7 +93,12 @@ func startListening() error {
 	startTime, err := data.GetLatestOperationConsensus()
 
 	if err == sql.ErrNoRows {
-		startTime = time.Unix(0, 0)
+		catchup := os.Getenv("MIRROR_CATCHUP")
+		if (catchup == "true") || (catchup == "") {
+			startTime = time.Unix(0, 0)
+		} else {
+			startTime = time.Now().UTC().Add(-10 * time.Second) // to avoid mirror reporting time in the future error
+		}
 	} else if err != nil {
 		return err
 	} else {

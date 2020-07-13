@@ -162,17 +162,28 @@ complete the following values in the .env file
 
 
 ```text
-DATABASE_URL=postgres://postgres:secretpasswordhere@localhost/postgres?sslmode=disable
+DATABASE_URL=postgres://postgres:password@localhost/stabl
+
+# hedera network 
+HEDERA_NETWORK=network/testnet.json
+HEDERA_MIRROR_NODE=hcs.testnet.mirrornode.hedera.com:5600
+# if true, the start time for the subscription will be epoch time if there is no data in the database
+# if false, the start time will be now - 10s if there is no data in the database
+MIRROR_CATCHUP=false
+
 # hedera network operator
 OPERATOR_ID=0.0.__
 OPERATOR_KEY=302...
 
-# stabl coin network admin
-ADMIN_KEY=302e020100300506032b6570042204207ce25f7ac7a4fa7284efa8453f153922e16ede6004c36778d3870c93d5dfbee5
-
 # topic used for the token
-# request a topic id from the Hedera team, or create one using the SDK
+# leave commented out to have the service create one on boot and exit immediately
 TOPIC_ID=0.0.__
+
+# stabl coin network issuer (join/mint)
+ISSUER_PRIVATE_KEY=302e020100300506032b6570042204207ce25f7ac7a4fa7284efa8453f153922e16ede6004c36778d3870c93d5dfbee5
+# stabl coin network admin (freeze, unfreeze, clawback)
+ADMIN_PUBLIC_KEY=302a300506032b6570032100ce99793e964002a8d268ee34a14cb1a33effd9054ba1a423e8ac82108ae6a157
+#private 302e020100300506032b6570042204205f89127785c690602c383b03202267fea8e9f63ef6ed6a55f2975fd2fc0d2f36
 
 # token metadata
 # returned from API GET /v1/token
@@ -189,6 +200,11 @@ MIRROR_PORT=3129
 
 # Mirror address (for API)
 MIRROR_ADDRESS=http://localhost:3129
+
+# Logging
+API_LOG=WARN # api/
+MIRROR_LOG=WARN # mirror/
+MIRROR_API_LOG=WARN # mirror/api/
 ```
 
 *Note: Ports `3128` and `3129` must be reachable for load testing and the UI. You may change them for `8081` and `8082` respectively (don't forget to reflect the change for the `MIRROR_ADDRESS` parameter).*
