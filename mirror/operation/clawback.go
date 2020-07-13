@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/domain"
+	"github.io/hashgraph/stable-coin/mirror/api/notification"
 	"github.io/hashgraph/stable-coin/mirror/state"
 	"github.io/hashgraph/stable-coin/pb"
 )
@@ -19,10 +20,12 @@ func Clawback(payload *pb.Clawback) (domain.Operation, error) {
 	var exists bool
 
 	if clawBackUserAddressI, exists = state.User.Load(payload.Account); !exists {
+		statusMessage := fmt.Sprintf("username `%s` does not exist", payload.Account)
+		notification.SendNotification("Admin", true, statusMessage)
 		return domain.Operation{
 			Operation:     domain.OpClawback,
 			Status:        domain.OpStatusFailed,
-			StatusMessage: fmt.Sprintf("username `%s` does not exist", payload.Account),
+			StatusMessage: statusMessage,
 		}, nil
 	}
 	clawBackUserAddress := []byte(clawBackUserAddressI.(ed25519.PublicKey))
@@ -30,11 +33,11 @@ func Clawback(payload *pb.Clawback) (domain.Operation, error) {
 	senderBalanceI, _ := state.Balance.Load(payload.Account)
 	senderBalance := senderBalanceI.(uint64)
 
-	// TODO: Handle response to the UI
-
 	state.UpdateBalance(payload.Account, func(balance uint64) uint64 {
 		return 0
 	})
+	statusMessage := fmt.Sprintf("Clawback successful for `%s`", payload.Account)
+	notification.SendNotification("Admin", false, statusMessage)
 
 	return domain.Operation{
 		Operation:   domain.OpClawback,

@@ -3,6 +3,7 @@ package operation
 import (
 	"encoding/hex"
 	"fmt"
+	"github.io/hashgraph/stable-coin/mirror/api/notification"
 
 	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/rs/zerolog/log"
@@ -25,29 +26,33 @@ func Announce(payload *pb.Join) (domain.Operation, error) {
 		Str("key", publicKeyHex).
 		Msg("Announce")
 
-	// TODO: Handle response to the UI
-
 	if _, exists := state.User.Load(payload.Username); exists {
 		// duplicate user name
+		statusMessage := fmt.Sprintf("user name `%s` already exists", payload.Username)
+		notification.SendNotification(payload.Username, true, statusMessage)
 		return domain.Operation{
 			Operation:     domain.OpAnnounce,
 			Status:        domain.OpStatusFailed,
-			StatusMessage: fmt.Sprintf("user name `%s` already exists", payload.Username),
+			StatusMessage: statusMessage,
 		}, nil
 	}
 
 	if _, exists := state.Address.Load(publicKeyHex); exists {
 		// duplicate public key
+		statusMessage := fmt.Sprintf("address `%s` already exists", publicKeyHex)
+		notification.SendNotification(payload.Username, true, statusMessage)
 		return domain.Operation{
 			Operation:     domain.OpAnnounce,
 			Status:        domain.OpStatusFailed,
-			StatusMessage: fmt.Sprintf("address `%s` already exists", publicKeyHex),
+			StatusMessage: statusMessage,
 		}, nil
 	}
 
 	state.AddUser(payload.Username, publicKey.Bytes())
 
 	userPublicKeyBytes := []byte(publicKey.Bytes())
+	statusMessage := fmt.Sprintf("user `%s` joined", payload.Username)
+	notification.SendNotification(payload.Username, false, statusMessage)
 	return domain.Operation{
 		Operation: domain.OpAnnounce,
 		Status:    domain.OpStatusComplete,

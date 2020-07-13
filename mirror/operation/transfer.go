@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/domain"
+	"github.io/hashgraph/stable-coin/mirror/api/notification"
 	"github.io/hashgraph/stable-coin/mirror/state"
 	"github.io/hashgraph/stable-coin/pb"
 )
@@ -33,10 +34,12 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 	senderUserName := senderUserNameI.(string)
 
 	if _, exists = state.Balance.Load(payload.ToAddress); !exists {
+		statusMessage := fmt.Sprintf("user `%s` does not exist", payload.ToAddress)
+		notification.SendNotification(senderUserName, true, statusMessage)
 		return domain.Operation{
 			Operation:     domain.OpTransfer,
 			Status:        domain.OpStatusFailed,
-			StatusMessage: fmt.Sprintf("user `%s` does not exist", payload.ToAddress),
+			StatusMessage: statusMessage,
 			FromAddress:   &senderAddress,
 		}, nil
 	}
@@ -46,10 +49,12 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 
 	if frozenUserI, exists := state.Frozen.Load(senderUserName); exists {
 		if frozenUserI.(bool) == true {
+			statusMessage := fmt.Sprintf("paying user `%s` is frozen", senderUserName)
+			notification.SendNotification(senderUserName, true, statusMessage)
 			return domain.Operation{
 				Operation:     domain.OpTransfer,
 				Status:        domain.OpStatusFailed,
-				StatusMessage: fmt.Sprintf("paying user `%s` is frozen", senderUserName),
+				StatusMessage: statusMessage,
 				FromAddress:   &senderAddress,
 				ToAddress:     &toAddress,
 			}, nil
@@ -58,10 +63,12 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 
 	if frozenUserI, exists := state.Frozen.Load(payload.ToAddress); exists {
 		if frozenUserI.(bool) == true {
+			statusMessage := fmt.Sprintf("receiving user `%s` is frozen", payload.ToAddress)
+			notification.SendNotification(senderUserName, true, statusMessage)
 			return domain.Operation{
 				Operation:     domain.OpTransfer,
 				Status:        domain.OpStatusFailed,
-				StatusMessage: fmt.Sprintf("receiving user `%s` is frozen", payload.ToAddress),
+				StatusMessage: statusMessage,
 				FromAddress:   &senderAddress,
 				ToAddress:     &toAddress,
 			}, nil
@@ -72,16 +79,16 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 	senderBalance := senderBalanceI.(uint64)
 
 	if senderBalance < payload.Quantity {
+		statusMessage := fmt.Sprintf("user `%s` has an insufficient balance", senderUserName)
+		notification.SendNotification(senderUserName, true, statusMessage)
 		return domain.Operation{
 			Operation:     domain.OpTransfer,
 			Status:        domain.OpStatusFailed,
-			StatusMessage: fmt.Sprintf("user `%s` has an insufficient balance", senderUserName),
+			StatusMessage: statusMessage,
 			FromAddress:   &senderAddress,
 			ToAddress:     &toAddress,
 		}, nil
 	}
-
-	// TODO: Handle response to the UI
 
 	state.UpdateBalance(payload.ToAddress, func(balance uint64) uint64 {
 		return balance + payload.Quantity
@@ -90,6 +97,12 @@ func Transfer(senderAddress []byte, payload *pb.Transfer) (domain.Operation, err
 	state.UpdateBalance(senderUserName, func(balance uint64) uint64 {
 		return balance - payload.Quantity
 	})
+
+	statusMessage := fmt.Sprintf("sent %d to `%s`", payload.Quantity, payload.ToAddress)
+	notification.SendNotification(senderUserName, false, statusMessage)
+
+	statusMessage = fmt.Sprintf("received %d from `%s`", payload.Quantity, senderUserName)
+	notification.SendNotification(payload.ToAddress, false, statusMessage)
 
 	return domain.Operation{
 		Operation:   domain.OpTransfer,
