@@ -16,6 +16,9 @@
  * Protobuf Compiler (protoc) <sub>†</sub>
  
  * [`protoc-gen-go`](https://github.com/golang/protobuf) <sub>†</sub> 
+ 
+ * (optional) docker version 19.03.8 (or above)
+ * (optional) docker compose version 1.25.4 (or above)
 
 <sup><sub>† Required only for development.</sub></sup>
 
@@ -38,6 +41,48 @@ or [apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
 In this example, all components have been co-located into a single server, it is however possible to separate each component if desired. The server is a n2d-standard-16 Google Compute virtual machine comprising 16 vCPUs and 64Gb of memory with a 2TB SSD hard drive running Debian GNU/Linux 10 (buster).
 
 *Note: This specification is likely oversize, however lower GCP specifications result in lower network throughput and lower disk IOPS* 
+
+## Docker compose
+
+A docker compose file enables you to quickly get the solution up and running. 
+
+*Note: This is not recommended for performance testing where an individual component installation is preferable*
+
+### Setup the application parameters
+
+```shell script
+cd ~/hedera-stable-coin-demo
+
+cp .env.sample .env
+
+nano .env
+```
+
+complete the following values in the .env file with your own, you may leave the others as they are.
+
+```text
+# hedera network operator
+OPERATOR_ID=0.0.__
+OPERATOR_KEY=302...
+
+# topic used for the token
+TOPIC_ID=0.0.__
+```
+### start docker images
+
+```shell script
+cd ~/hedera-stable-coin-demo
+
+docker-compose up
+```
+
+All the necessary services should start up, you can navigate to the UI at `http://localhost:8080`
+
+*Note: adding a `-d` flag to the `docker-compose up` command will run the docker images in the background.
+
+## Installing individual components
+
+Please follow the instructions below to install each of the solution's components individually.
 
 ### PostgreSQL installation
 
@@ -344,9 +389,7 @@ This will generate a private/public key which will be stored in a Cookie and the
 
 Within a few seconds, you should see a new message appear in the [Kabuto](https://kabuto.sh) Explorer. The same message is picked up by the Mirror Subscriber which verifies the message and adds the new user to the database.
 
-Refresh the Payment Application web page, it should move to a list of Accounts.
-
-*Note: If web sockets are implemented, the page should refresh automatically. If not, wait until the message has appeared in Kabuto, then refresh the application’s web page.*
+At the same time, the UI should refresh and present the accounts page.
 
 *Note: You may reset your registration (this does not remove data from the database, only from the cookies) by clicking on the menu and choosing the Reset menu option.*
 
@@ -385,7 +428,7 @@ A request is sent to the REST server which creates a Hedera Consensus Transactio
 
 When the request is received by the Mirror Subscriber, it checks the signatures on the operation and credits the user’s account with the amount specified.
 
-A few seconds after seeing the message in the explorer, refresh the UI.
+The result of the operation appears as a toaster at the bottom of the screen after a few seconds, and the page refreshes to show the new balance.
 
 The balance now shows the amount you specified.
 
@@ -397,7 +440,7 @@ Redeeming is the opposite of buying. STABL tokens are exchanged for FIAT currenc
 
 Click on the REDEEM button, input an amount to redeem and click on PROCEED.
 
-If all is well, after witnessing the message in the explorer, refresh your UI to see the STABL balance decremented by the specified amount (here, we specified 30).
+The result of the operation appears as a toaster at the bottom of the screen after a few seconds, and the page refreshes to show the new balance.
 
 ![Register](assets/images/operateAfterRedeem.png)
 
@@ -411,12 +454,13 @@ Also, if the same operation was replayed on the Hedera Network by a malicious ac
 
 Sending STABL transfers STABL tokens from one account to another. In order to perform this operation, another user must exist in the decentralized application database. Using another browser (to avoid cookie overlap), register a new user.
 
-After successfully registering a new user (here we created a user called Hudson), refresh the UI so it’s aware of the new user and click on the SEND button.
+After successfully registering a new user (here we created a user called Hudson), click on the SEND button.
 
-A dialog appears, where you can input an amount to send and a user to send to.
+A dialog appears, where you can input an amount to send and type the name of a user to send to (the page will search through the list of names matching the search and return the first 10).
 
 ![Register](assets/images/dialogSend.png)
 
-Click the PROCEED button, witness the message in the explorer, then refresh both UIs to reflect the transfer of tokens.
+Click the PROCEED button, witness the message in the explorer
+The result of the operation appears as a toaster at the bottom of the screen after a few seconds, and the page refreshes to show the new balance.
 
 ![Register](assets/images/accountsHudson.png)
