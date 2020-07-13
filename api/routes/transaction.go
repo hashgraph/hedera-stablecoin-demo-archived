@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	mrand "math/rand"
 	"net/http"
@@ -157,14 +156,20 @@ func sendTransaction(v proto.Message, p *pb.Primitive) error {
 
 func sendRaw(raw []byte) error {
 	for {
-		// Repeat sending in the event of a duplicate transaction id
 		_, err := hedera.NewConsensusMessageSubmitTransaction().
 			SetMessage(raw).
 			SetTopicID(hederaTopicID).
 			Execute(hederaClient)
+
 		if err != nil {
-			fmt.Println(err.Error())
-			if !strings.Contains(err.Error(), "DUPLICATE_TRANSACTION") {
+			if strings.Contains(err.Error(), "server closed the stream without sending trailers") {
+				// resubmit
+				log.Warn().Msg("server closed stream - resubmitting")
+			} else if strings.Contains(err.Error(), "DUPLICATE_TRANSACTION") {
+				// resubmit
+				log.Warn().Msg("duplicate transaction id - resubmitting")
+			} else {
+				log.Error().Err(err)
 				return err
 			}
 		} else {
