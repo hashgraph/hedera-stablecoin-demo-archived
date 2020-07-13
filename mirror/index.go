@@ -7,6 +7,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/joho/godotenv"
@@ -18,10 +23,6 @@ import (
 	"github.io/hashgraph/stable-coin/mirror/operation"
 	"github.io/hashgraph/stable-coin/mirror/state"
 	"github.io/hashgraph/stable-coin/pb"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // statistics -----------------
@@ -41,10 +42,7 @@ var mirrorClient hedera.MirrorClient
 var listenAttempts = 0
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	_ = godotenv.Load()
 
 	// Configure the logger to be pretty
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
@@ -66,7 +64,7 @@ func main() {
 	}
 
 	// add the admin user if missing
-	if _, exists := state.User.Load("Admin"); ! exists {
+	if _, exists := state.User.Load("Admin"); !exists {
 
 		adminPublicKey, err := hedera.Ed25519PublicKeyFromString(os.Getenv("ADMIN_PUBLIC_KEY"))
 		if err != nil {
@@ -102,7 +100,7 @@ func startListening() error {
 
 	_, err = hedera.NewMirrorConsensusTopicQuery().
 		SetTopicID(topicID).
-		SetStartTime(startTime.Add(1 * time.Nanosecond)).
+		SetStartTime(startTime.Add(1*time.Nanosecond)).
 		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
 			listenAttempts = 0
 
@@ -240,7 +238,7 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		// get admin key
 		var adminPubKeyI interface{}
 		var exists bool
-		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+		if adminPubKeyI, exists = state.User.Load("Admin"); !exists {
 			op = domain.Operation{
 				Operation:     domain.OpFreeze,
 				Status:        domain.OpStatusFailed,
@@ -275,7 +273,7 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		// get admin key
 		var adminPubKeyI interface{}
 		var exists bool
-		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+		if adminPubKeyI, exists = state.User.Load("Admin"); !exists {
 			op = domain.Operation{
 				Operation:     domain.OpUnFreeze,
 				Status:        domain.OpStatusFailed,
@@ -307,7 +305,7 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		// get admin key
 		var adminPubKeyI interface{}
 		var exists bool
-		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+		if adminPubKeyI, exists = state.User.Load("Admin"); !exists {
 			op = domain.Operation{
 				Operation:     domain.OpClawback,
 				Status:        domain.OpStatusFailed,
@@ -339,7 +337,7 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 		// get admin key
 		var adminPubKeyI interface{}
 		var exists bool
-		if adminPubKeyI, exists = state.User.Load("Admin"); ! exists {
+		if adminPubKeyI, exists = state.User.Load("Admin"); !exists {
 			op = domain.Operation{
 				Operation:     domain.OpAdminKeyUpdate,
 				Status:        domain.OpStatusFailed,

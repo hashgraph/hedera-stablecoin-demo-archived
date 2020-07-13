@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -8,14 +10,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/ziflex/lecho/v2"
 	"github.io/hashgraph/stable-coin/api/routes"
-	"os"
 )
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	_ = godotenv.Load()
 }
 
 func main() {

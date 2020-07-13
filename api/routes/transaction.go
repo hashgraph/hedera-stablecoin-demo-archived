@@ -8,6 +8,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	mrand "math/rand"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hashgraph/hedera-sdk-go"
 	"github.com/joho/godotenv"
@@ -15,12 +22,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.io/hashgraph/stable-coin/pb"
-	"io/ioutil"
-	mrand "math/rand"
-	"net/http"
-	"os"
-	"strconv"
-	"strings"
 )
 
 var hederaClient *hedera.Client
@@ -33,10 +34,7 @@ type transactionResponse struct {
 }
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	_ = godotenv.Load()
 
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: false})
 
@@ -166,7 +164,7 @@ func sendRaw(raw []byte) error {
 			Execute(hederaClient)
 		if err != nil {
 			fmt.Println(err.Error())
-			if !strings.Contains(err.Error(),"DUPLICATE_TRANSACTION") {
+			if !strings.Contains(err.Error(), "DUPLICATE_TRANSACTION") {
 				return err
 			}
 		} else {

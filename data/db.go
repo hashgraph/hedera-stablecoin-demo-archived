@@ -14,10 +14,7 @@ import (
 var db *sqlx.DB
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	_ = godotenv.Load()
 
 	db = sqlx.MustConnect("pgx", os.Getenv("DATABASE_URL"))
 
@@ -25,7 +22,7 @@ func init() {
 	// too many connections
 	db.SetMaxOpenConns(10)
 
-	err = runMigrations()
+	err := runMigrations()
 	if err != nil {
 		panic(err)
 	}

@@ -1,0 +1,53 @@
+version: "3"
+services:
+    db:
+        image: postgres:12
+        restart: on-failure
+        environment:
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: stabl
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    api:
+        build:
+            context: .
+            args:
+                target: api
+        restart: on-failure
+        ports:
+            - "3128:3128"
+        depends_on:
+            - db
+        env_file: .env
+        environment:
+            TARGET: api
+            DATABASE_URL: postgres://postgres:password@db/stabl
+
+    mirror:
+        build:
+            context: .
+            args:
+                target: mirror
+        restart: on-failure
+        ports:
+            - "3129:3129"
+        depends_on:
+            - db
+            - api
+        env_file: .env
+        environment:
+            TARGET: mirror
+            DATABASE_URL: postgres://postgres:password@db/stabl
+
+    ui:
+        build: ui/
+        restart: on-failure
+        ports:
+            - "8080:80"
+        depends_on:
+            - api
+            - mirror
