@@ -19,6 +19,11 @@ var upgrader = websocket.Upgrader{
 // map of users to web sockets
 var socketForUser = map[string]*websocket.Conn{}
 
+type notificationStruct struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+}
+
 // https://echo.labstack.com/cookbook/websocket
 func Handler(c echo.Context) error {
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
@@ -56,4 +61,14 @@ func Handler(c echo.Context) error {
 	})
 
 	select {}
+}
+
+func SendNotification(username string, inError bool, message string) {
+	if socketForUser[username] != nil {
+		notification := &notificationStruct{
+			Error:   inError,
+			Message: message,
+		}
+		socketForUser[username].WriteJSON(notification)
+	}
 }
