@@ -1,7 +1,9 @@
 package main
 
 import (
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -39,8 +41,13 @@ func main() {
 	e.POST("/v1/token/mintTo", routes.SendMint)
 	e.POST("/v1/token/transaction", routes.SendRawTransaction)
 
-	// NOTE: Runs on :8080 by default but can be overridden by $PORT
-	err := e.Start(":" + os.Getenv("PORT"))
+	err := e.StartServer(&http.Server{
+		Addr:         ":" + os.Getenv("PORT"),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	})
+
 	if err != nil {
 		panic(err)
 	}

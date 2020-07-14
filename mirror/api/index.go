@@ -1,6 +1,10 @@
 package api
 
 import (
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -8,7 +12,6 @@ import (
 	"github.com/ziflex/lecho/v2"
 	"github.io/hashgraph/stable-coin/mirror/api/notification"
 	"github.io/hashgraph/stable-coin/mirror/api/routes"
-	"os"
 )
 
 func Run() {
@@ -39,7 +42,13 @@ func Run() {
 	e.GET("/v1/token/isAdminUser/:publicKey", routes.IsAdminUser)
 	e.GET("/ws", notification.Handler)
 
-	err := e.Start(":" + os.Getenv("MIRROR_PORT"))
+	err := e.StartServer(&http.Server{
+		Addr:         ":" + os.Getenv("MIRROR_PORT"),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	})
+
 	if err != nil {
 		panic(err)
 	}
