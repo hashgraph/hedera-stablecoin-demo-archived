@@ -2,11 +2,41 @@ package data
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.io/hashgraph/stable-coin/domain"
-	"time"
 )
+
+// returns operation ID -> true as there is no sync.Set type
+func GetAllOperationIDs() (*sync.Map, error) {
+	operationIDs := new(sync.Map)
+
+	rows, err := db.Query(`
+SELECT encode(operation.signature, 'hex')
+FROM operation
+	`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+
+		operationIDs.Store(id, true)
+	}
+
+	return operationIDs, nil
+}
 
 func GetOperationsForUsername(username string) ([]domain.Operation, error) {
 	operations := []domain.Operation{}
@@ -15,7 +45,7 @@ SELECT operation.*, from_address.username as from_username, to_address.username 
 FROM operation
 LEFT JOIN address from_address ON from_address.public_key = operation.from_address
 LEFT JOIN address to_address ON to_address.public_key = operation.to_address
-WHERE from_address.username = $1 
+WHERE from_address.username = $1
    OR to_address.username = $1
 ORDER BY operation.consensus DESC
 	`, username)

@@ -3,23 +3,26 @@ package state
 import (
 	"crypto/ed25519"
 	"encoding/hex"
-	"github.com/hashgraph/hedera-sdk-go"
 	"sync"
+
+	"github.com/hashgraph/hedera-sdk-go"
 
 	"github.io/hashgraph/stable-coin/data"
 	"github.io/hashgraph/stable-coin/domain"
 )
 
+// store of operation "ID"s so we don't process duplicate operations
+// in the future, we want to tweak the message body so its linked to the Transaction ID
+// and we can let Hedera handle duplicates
+var operationIDs *sync.Map
+
 // username -> balance
-// var Balance = map[string]uint64{}
 var Balance = sync.Map{}
 
 // username -> address (public key)
-// var User = map[string]ed25519.PublicKey{}
 var User = sync.Map{}
 
 // address (public key hex) -> username
-// var Address = map[string]string{}
 var Address = sync.Map{}
 
 // frozen (username) -> boolean
@@ -52,12 +55,23 @@ func init() {
 		panic(err)
 	}
 
+	operationIDs, err = data.GetAllOperationIDs()
+	if err != nil {
+		panic(err)
+	}
+
 	for _, row := range addressRows {
 		Balance.Store(row.Username, uint64(row.Balance))
 		User.Store(row.Username, ed25519.PublicKey(row.PublicKey))
 		Address.Store(hex.EncodeToString(row.PublicKey), row.Username)
 		Frozen.Store(row.Username, row.Frozen)
 	}
+}
+
+// OperationExists checks for an existing operation ID
+func OperationExists(signatureHex string) bool {
+	_, exists := operationIDs.Load(signatureHex)
+	return exists
 }
 
 // AddUser adds a new user
@@ -136,6 +150,9 @@ func AddOperation(op domain.Operation) {
 			pendingOperationsForUser[toUserNameS] = append(pendingOperationsForUser[toUserNameS], op)
 		}
 	}
+
+	// store the signature so we don't accept this operation again
+	operationIDs.Store(hex.EncodeToString(op.Signature), true)
 }
 
 func GetPendingOperationsForUser(userName string) []domain.Operation {

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"crypto/ed25519"
-	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -17,7 +16,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.io/hashgraph/stable-coin/data"
 	"github.io/hashgraph/stable-coin/domain"
 	"github.io/hashgraph/stable-coin/mirror/api"
 	"github.io/hashgraph/stable-coin/mirror/operation"
@@ -90,24 +88,24 @@ func startListening() error {
 		return err
 	}
 
-	startTime, err := data.GetLatestOperationConsensus()
+	// startTime, err := data.GetLatestOperationConsensus()
 
-	if err == sql.ErrNoRows {
-		catchup := os.Getenv("MIRROR_CATCHUP")
-		if (catchup == "true") || (catchup == "") {
-			startTime = time.Unix(0, 0)
-		} else {
-			startTime = time.Now().UTC().Add(-10 * time.Second) // to avoid mirror reporting time in the future error
-		}
-	} else if err != nil {
-		return err
-	} else {
-		startTime = startTime.Add(1 * time.Nanosecond)
-	}
+	// if err == sql.ErrNoRows {
+	// 	catchup := os.Getenv("MIRROR_CATCHUP")
+	// 	if (catchup == "true") || (catchup == "") {
+	// 		startTime = time.Unix(0, 0)
+	// 	} else {
+	// 		startTime = time.Now().UTC().Add(-10 * time.Second) // to avoid mirror reporting time in the future error
+	// 	}
+	// } else if err != nil {
+	// 	return err
+	// } else {
+	// 	startTime = startTime.Add(1 * time.Nanosecond)
+	// }
 
 	_, err = hedera.NewMirrorConsensusTopicQuery().
 		SetTopicID(topicID).
-		SetStartTime(startTime).
+		SetStartTime(time.Unix(0, 0)).
 		Subscribe(mirrorClient, func(response hedera.MirrorConsensusTopicResponse) {
 			listenAttempts = 0
 
@@ -179,6 +177,13 @@ func handle(response hedera.MirrorConsensusTopicResponse) error {
 	err := proto.Unmarshal(response.Message, &primitive)
 	if err != nil {
 		return err
+	}
+
+	signatureHex := hex.EncodeToString(primitive.Header.Signature)
+	if state.OperationExists(signatureHex) {
+		log.Warn().Msgf("ignoring duplicate operation: %v", signatureHex)
+
+		return nil
 	}
 
 	primitiveHederaPublicKey, err := hedera.Ed25519PublicKeyFromString(primitive.Header.PublicKey)
