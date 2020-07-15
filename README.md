@@ -84,6 +84,38 @@ All the necessary services should start up, you can navigate to the UI at `http:
 
 Please follow the instructions below to install each of the solution's components individually.
 
+### Server configuration
+
+Under load, a larger number of open files than setup by default may be required, follow these steps to increase the limits on your server.
+
+```shell script
+sudo nano /etc/security/limits.conf
+```
+
+add
+
+```
+*                   -       nofile          50000
+```
+
+```shell script
+sudo nano /etc/sysctl.conf
+```
+
+add
+
+```
+fs.file-max=500000
+```
+ 
+apply changes
+
+```shell script
+sudo sysctl -p
+```
+
+log out and log in again for the changes to apply to your session
+
 ### PostgreSQL installation
 
 #### Install wget
