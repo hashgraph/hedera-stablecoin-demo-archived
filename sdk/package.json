@@ -1,0 +1,25 @@
+{
+  "name": "stable-coin-sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hashgraph/hedera-stable-coin-demo.git"
+  },
+  "author": "Ryan Leckey <ryan@launchbadge.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hashgraph/hedera-stable-coin-demo/issues"
+  },
+  "homepage": "https://github.com/hashgraph/hedera-stable-coin-demo#readme",
+  "dependencies": {
+    "@hashgraph/sdk": "^1.1.12",
+    "@stablelib/base64": "^1.0.0",
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "google-protobuf": "^3.12.2",
+    "tweetnacl": "^1.0.3",
+    "yargs": "^15.4.1"
+  }
+}
