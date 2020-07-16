@@ -14,27 +14,31 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 public class End2End {
 
     static class Stats {
-        private long total = 0;
-        private long min = -1;
-        private long max = -1;
+        private float total = 0;
+        private float min = -1;
+        private float max = -1;
 
-        public long range_0_10 = 0;
-        public long range_0_10_total = 0;
-        public long range_11_15 = 0;
-        public long range_11_15_total = 0;
-        public long range_16_20 = 0;
-        public long range_16_20_total = 0;
-        public long range_20_plus = 0;
-        public long range_20_total = 0;
-        public long apiErrors = 0;
-        public long lastValue = -1;
+        public float range_0_10 = 0;
+        public float range_0_10_total = 0;
+        public float range_11_15 = 0;
+        public float range_11_15_total = 0;
+        public float range_16_20 = 0;
+        public float range_16_20_total = 0;
+        public float range_20_plus = 0;
+        public float range_20_total = 0;
+        public float apiErrors = 0;
+        public float lastValue = -1;
 
         private String logFile = "";
         private String operation = "";
@@ -43,7 +47,7 @@ public class End2End {
             this.logFile = logFile;
             this.operation = operation;
         }
-        public void setValues (long value) {
+        public void setValues (float value) {
             lastValue = value;
             if (value == 100) {
                 apiErrors += 1;
@@ -74,43 +78,45 @@ public class End2End {
 
         public void printOut(FileWriter fr) throws IOException {
             String output = "";
-            output = String.format("%s Min=%d, Max=%d, 0-10=%d, 11-15=%d, 16-20=%d, 20+=%d"
+            output = String.format("%s Min=%.1f, Max=%.1f, 0-10=%.1f, 11-15=%.1f, 16-20=%.1f, 20+=%.1f"
                     , operation, min, max, range_0_10, range_11_15, range_16_20, range_20_plus);
             System.out.println(output);
 
-            String sRange0_10_average = "";
+            float range0_10_average = range_0_10_total;
             if (range_0_10 != 0) {
-                sRange0_10_average = String.format("%.1f", (float)range_0_10_total / range_0_10);
+                range0_10_average = range_0_10_total / range_0_10;
             }
-            String sRange_11_15_average = "";
+            float range_11_15_average = range_11_15_total;
             if (range_11_15 != 0) {
-                sRange_11_15_average = String.format("%.1f", (float)range_11_15_total / range_11_15);
+                range_11_15_average = range_11_15_total / range_11_15;
             }
-            String sRange_16_20_average = "";
+            float range_16_20_average = range_16_20_total;
             if (range_16_20 != 0) {
-                sRange_16_20_average = String.format("%.1f", (float)range_16_20_total / range_16_20);
+                range_16_20_average = range_16_20_total / range_16_20;
             }
-            String sRange_20_plus_average = Long.toString(range_20_plus);
+            float range_20_plus_average = range_20_plus;
             if (range_20_plus != 0) {
-                sRange_20_plus_average = String.format("%.1f", (float)range_20_total / range_20_plus);
+                range_20_plus_average = range_20_total / range_20_plus;
             }
 
-            output = String.format("%-9s, %-3s, %-3s, %-10s, %-12s, %-11s, %-13s, %-11s, %-13s, %-9s, %-11s"
+            output = String.format("%-9s, %-3.2f, %-3.2f, %-10.0f, %-12.2f, %-11.0f, %-13.2f, %-11.0f, %-13.2f, %-9.0f, %-11.2f\n"
                     , operation
-                    , Long.toString(min)
-                    , Long.toString(max)
-                    , Long.toString(range_0_10)
-                    , sRange0_10_average
-                    , Long.toString(range_11_15)
-                    , sRange_11_15_average
-                    , Long.toString(range_16_20)
-                    , sRange_16_20_average
-                    , Long.toString(range_20_plus)
-                    , sRange_20_plus_average);
+                    , min
+                    , max
+                    , range_0_10
+                    , range0_10_average
+                    , range_11_15
+                    , range_11_15_average
+                    , range_16_20
+                    , range_16_20_average
+                    , range_20_plus
+                    , range_20_plus_average);
             fr.write(output + "\n");
         }
 
     }
+    private static float timeout = 1000 * 20; // 20s
+    private static int queryInterval = 100; // in milliseconds
     private static Client client = ClientBuilder.newClient();
     private static final Random random = new Random();
     private static List<String> usernames = new ArrayList<String>();
@@ -118,12 +124,13 @@ public class End2End {
     private static List<Ed25519PublicKey> publicKeys = new ArrayList<Ed25519PublicKey>();
     private static long cycle = 0;
     private static long initialBalance = 10000;
-    private static long timeout = 1 * 20; // 20s
     private static String sendHost = "";
     private static String queryHost = "";
     private static Stats joinStats;
     private static Stats mintStats;
     private static Stats sendStats;
+
+    private static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withLocale(Locale.US).withZone(ZoneOffset.UTC);
 
     public static void e2eTest(String sendHost, String queryHost) throws IOException, InterruptedException {
         String testId = Integer.toString(random.nextInt(10000));
@@ -198,57 +205,57 @@ public class End2End {
                     mintStats.printOut(fr);
                     sendStats.printOut(fr);
 
-                    long max = joinStats.max;
+                    float max = joinStats.max;
                     if (mintStats.max > max) { max = mintStats.max; }
                     if (sendStats.max > max) { max = sendStats.max; }
-                    long min = joinStats.min;
+                    float min = joinStats.min;
                     if (mintStats.min < min) { min = mintStats.min; }
                     if (sendStats.min < min) { min = sendStats.min; }
-                    long count_0_10 = joinStats.range_0_10 + mintStats.range_0_10 + sendStats.range_0_10;
-                    long total_0_10 = joinStats.range_0_10_total + mintStats.range_0_10_total + sendStats.range_0_10_total;
+                    float count_0_10 = joinStats.range_0_10 + mintStats.range_0_10 + sendStats.range_0_10;
+                    float total_0_10 = joinStats.range_0_10_total + mintStats.range_0_10_total + sendStats.range_0_10_total;
                     float avg_0_10 = 0;
                     if (count_0_10 != 0) {
-                        avg_0_10 = (float)total_0_10 / count_0_10;
+                        avg_0_10 = total_0_10 / count_0_10;
                     }
-                    long count_11_15 = joinStats.range_11_15 + mintStats.range_11_15 + sendStats.range_11_15;
-                    long total_11_15 = joinStats.range_11_15_total + mintStats.range_11_15_total + sendStats.range_11_15_total;
+                    float count_11_15 = joinStats.range_11_15 + mintStats.range_11_15 + sendStats.range_11_15;
+                    float total_11_15 = joinStats.range_11_15_total + mintStats.range_11_15_total + sendStats.range_11_15_total;
                     float avg_11_15 = 0;
                     if (count_11_15 != 0) {
-                        avg_11_15 = (float)total_11_15 / count_11_15;
+                        avg_11_15 = total_11_15 / count_11_15;
                     }
-                    long count_16_20 = joinStats.range_16_20 + mintStats.range_16_20 + sendStats.range_16_20;
-                    long total_16_20 = joinStats.range_16_20_total + mintStats.range_16_20_total + sendStats.range_16_20_total;
+                    float count_16_20 = joinStats.range_16_20 + mintStats.range_16_20 + sendStats.range_16_20;
+                    float total_16_20 = joinStats.range_16_20_total + mintStats.range_16_20_total + sendStats.range_16_20_total;
                     float avg_16_20 = 0;
                     if (count_16_20 != 0) {
                         avg_16_20 = (float)total_16_20 / count_16_20;
                     }
-                    long count_20_plus = joinStats.range_20_plus + mintStats.range_20_plus + sendStats.range_20_plus;
-                    long total_20_plus = joinStats.range_20_total + mintStats.range_20_total + sendStats.range_20_total;
+                    float count_20_plus = joinStats.range_20_plus + mintStats.range_20_plus + sendStats.range_20_plus;
+                    float total_20_plus = joinStats.range_20_total + mintStats.range_20_total + sendStats.range_20_total;
                     float avg_20_plus = 0;
                     if (count_20_plus != 0) {
                         avg_20_plus = (float)total_20_plus / count_20_plus;
                     }
-                    long count_overall = count_0_10 + count_11_15 + count_16_20 + count_20_plus;
-                    long total_overall = total_0_10 + total_11_15 + total_16_20 + total_20_plus;
+                    float count_overall = count_0_10 + count_11_15 + count_16_20 + count_20_plus;
+                    float total_overall = total_0_10 + total_11_15 + total_16_20 + total_20_plus;
                     float avg_overall = 0;
                     if (count_overall != 0) {
                         avg_overall = (float)total_overall / count_overall;
                     }
-                    String output = String.format("%-9s, %-3s, %-3s, %-10s, %-12.2f, %-11s, %-13.2f, %-11s, %-13.2f, %-9s, %-11.2f\n"
+                    String output = String.format("%-9s, %-3.2f, %-3.2f, %-10.0f, %-12.2f, %-11.0f, %-13.2f, %-11.0f, %-13.2f, %-9.0f, %-11.2f\n"
                             , "Summary"
-                            , Long.toString(min)
-                            , Long.toString(max)
-                            , Long.toString(count_0_10)
+                            , min
+                            , max
+                            , count_0_10
                             , avg_0_10
-                            , Long.toString(count_11_15)
+                            , count_11_15
                             , avg_11_15
-                            , Long.toString(count_16_20)
+                            , count_16_20
                             , avg_16_20
-                            , Long.toString(count_20_plus)
+                            , count_20_plus
                             , avg_20_plus
                     );
                     output += String.format("Overall average: %.2f\n", avg_overall);
-                    output += String.format("API Timeouts (>%d): Join=%d, Buy=%d, Send=%d\n", timeout, joinStats.apiErrors, mintStats.apiErrors, sendStats.apiErrors);
+                    output += String.format("API Timeouts (>%.0f): Join=%.0f, Buy=%.0f, Send=%.0f\n", timeout / 1000, joinStats.apiErrors, mintStats.apiErrors, sendStats.apiErrors);
                     fr.write(output);
                     fr.close();
 
@@ -278,23 +285,23 @@ public class End2End {
         RESTJoin restJoin = new RESTJoin(userName, publicKey.toString());
         Instant startTime = Instant.now();
         if (postJoin(restJoin)) {
-            Long duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
-            System.out.print(startTime + " Join api (" + duration + ")");
+            float duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
+            System.out.print(String.format("%s Join api (%.2f)s", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
 
-            long queryStart = Instant.now().getEpochSecond();
+            float queryStart = Instant.now().toEpochMilli();
             long queryCount = 0;
             while (true) {
                 queryCount += 1;
-                Thread.sleep(1000);
-                long callTime = Instant.now().getEpochSecond();
+                Thread.sleep(queryInterval);
+                float callTime = Instant.now().toEpochMilli();
                 if (validUser(userName)) {
-                    duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
-                    callTime = Instant.now().getEpochSecond() - callTime;
-                    joinStats.setValues(duration);
-                    System.out.println(", complete (" + duration + "), user api get call (" + callTime + "), queryCount (" + queryCount + ")");
+                    duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
+                    callTime = Instant.now().toEpochMilli() - callTime;
+                    joinStats.setValues(duration / 1000);
+                    System.out.println(", complete (" + duration / 1000 + "), user api get call (" + callTime / 1000 + "), queryCount (" + queryCount + ")");
                     return true;
-                } else if (Instant.now().getEpochSecond() - queryStart > timeout) {
-                    System.out.println(" Timeout after " + timeout + " seconds and " + queryCount + " queries");
+                } else if (Instant.now().toEpochMilli() - queryStart > timeout) {
+                    System.out.println(" Timeout after " + timeout / 1000 + " seconds and " + queryCount + " queries");
                     joinStats.setValues(100);
                     return false;
                 }
@@ -309,22 +316,22 @@ public class End2End {
         RESTMintTo restMintTo = new RESTMintTo(userName, Long.toString(initialBalance));
         Instant startTime = Instant.now();
         if (postMintTo(restMintTo)) {
-            long duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
-            System.out.print(startTime + " MintTo api (" + duration + ")");
-            long queryStart = Instant.now().getEpochSecond();
+            float duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
+            System.out.print(String.format("%s MintTo api (%.2f)s", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
+            float queryStart = Instant.now().toEpochMilli();
             long queryCount = 0;
             while (true) {
                 queryCount += 1;
-                Thread.sleep(1000);
-                long callTime = Instant.now().getEpochSecond();
+                Thread.sleep(queryInterval);
+                float callTime = Instant.now().toEpochMilli();
                 if (balance(userName) == initialBalance) {
-                    duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
-                    callTime = Instant.now().getEpochSecond() - callTime;
-                    mintStats.setValues(duration);
-                    System.out.println(", complete (" + duration + "), user api get call (" + callTime + "), queryCount (" + queryCount + ")");
+                    duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
+                    callTime = Instant.now().toEpochMilli() - callTime;
+                    mintStats.setValues(duration / 1000);
+                    System.out.println(", complete (" + duration / 1000 + "), user api get call (" + callTime / 1000 + "), queryCount (" + queryCount + ")");
                     return true;
-                } else if (Instant.now().getEpochSecond() - queryStart > timeout) {
-                    System.out.println(" Timeout after " + timeout + " seconds and " + queryCount + " queries");
+                } else if (Instant.now().toEpochMilli() - queryStart > timeout) {
+                    System.out.println(" Timeout after " + timeout / 1000 + " seconds and " + queryCount + " queries");
                     mintStats.setValues(100);
                     return false;
                 }
@@ -342,23 +349,23 @@ public class End2End {
         Instant startTime = Instant.now();
         long currentBalance = balance(usernames.get(userToSendTo));
         if (postPrimitive(restPrimitive)) {
-            long duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
-            System.out.print(startTime + " Transfer api (" + duration + ")");
-            long queryStart = Instant.now().getEpochSecond();
+            float duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
+            System.out.print(String.format("%s Transfer api (%.2f)s", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
+            float queryStart = Instant.now().toEpochMilli();
             long queryCount = 0;
             while (true) {
                 queryCount += 1;
-                Thread.sleep(1000);
-                long callTime = Instant.now().getEpochSecond();
+                Thread.sleep(queryInterval);
+                float callTime = Instant.now().toEpochMilli();
                 if (balance(usernames.get(userToSendTo)) != currentBalance) {
-                    duration = Instant.now().getEpochSecond() - startTime.getEpochSecond();
-                    callTime = Instant.now().getEpochSecond() - callTime;
-                    sendStats.setValues(duration);
-                    System.out.println(", complete (" + duration + "), user api get call (" + callTime + "), queryCount (" + queryCount + ")");
+                    duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
+                    callTime = Instant.now().toEpochMilli() - callTime;
+                    sendStats.setValues(duration / 1000);
+                    System.out.println(", complete (" + duration / 1000 + "), user api get call (" + callTime / 1000 + "), queryCount (" + queryCount + ")");
                     return true;
-                } else if (Instant.now().getEpochSecond() - queryStart > timeout) {
+                } else if (Instant.now().toEpochMilli() - queryStart > timeout) {
                     sendStats.setValues(100);
-                    System.out.println(" Timeout after " + timeout + " seconds and " + queryCount + " queries");
+                    System.out.println(" Timeout after " + timeout / 1000 + " seconds and " + queryCount + " queries");
                     return false;
                 }
             }
