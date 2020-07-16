@@ -258,8 +258,8 @@ public class End2End {
             }
 
             if (delayTest) {
-                System.out.print("Sleeping 5 after error");
-                sleep(5);
+                System.out.print("Sleeping 3s after timeout");
+                sleep(3);
                 delayTest = false;
             } else {
                 //sleep(3);
