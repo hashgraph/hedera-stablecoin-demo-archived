@@ -239,7 +239,7 @@ complete the following values in the .env file
 
 
 ```text
-DATABASE_URL=postgres://postgres:password@localhost/stabl
+DATABASE_URL=postgres://postgres:password@localhost/postgres
 
 # hedera network 
 HEDERA_NETWORK=network/testnet.json
