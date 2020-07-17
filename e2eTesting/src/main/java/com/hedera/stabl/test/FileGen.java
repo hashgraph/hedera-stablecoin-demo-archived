@@ -36,7 +36,8 @@ public class FileGen implements Runnable {
                 buyPrintWriter.println(fileSuffix + "_user_" + i + "," + (10_000 + random.nextInt(10_000)));
                 burnPrintWriter.println(Primitives.burnPrimitive(privateKey, publicKey));
                 String toAddress = fileSuffix + "_user_" + random.nextInt(iterations);
-                sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKey, publicKey));
+                int quantity = random.nextInt(100) + 1;
+                sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKey, publicKey, quantity));
             }
             joinPrintWriter.close();
             buyPrintWriter.close();

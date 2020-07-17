@@ -286,9 +286,9 @@ public class End2End {
         Instant startTime = Instant.now();
         if (postJoin(restJoin)) {
             float duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
-            System.out.print(String.format("%s Join api (%.2f)s", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
+            System.out.print(String.format("%s Join api (%.2fs)", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
 
-            float queryStart = Instant.now().toEpochMilli();
+            long queryStart = Instant.now().toEpochMilli();
             long queryCount = 0;
             while (true) {
                 queryCount += 1;
@@ -298,10 +298,10 @@ public class End2End {
                     duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
                     callTime = Instant.now().toEpochMilli() - callTime;
                     joinStats.setValues(duration / 1000);
-                    System.out.println(", complete (" + duration / 1000 + "), user api get call (" + callTime / 1000 + "), queryCount (" + queryCount + ")");
+                    System.out.println(", complete (" + duration / 1000 + "s), user api get call (" + callTime / 1000 + "s), queryCount (" + queryCount + ")");
                     return true;
                 } else if (Instant.now().toEpochMilli() - queryStart > timeout) {
-                    System.out.println(" Timeout after " + timeout / 1000 + " seconds and " + queryCount + " queries");
+                    System.out.println(" Timeout for user " + userName + " after " + timeout / 1000 + " seconds and " + queryCount + " queries");
                     joinStats.setValues(100);
                     return false;
                 }
@@ -317,8 +317,8 @@ public class End2End {
         Instant startTime = Instant.now();
         if (postMintTo(restMintTo)) {
             float duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
-            System.out.print(String.format("%s MintTo api (%.2f)s", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
-            float queryStart = Instant.now().toEpochMilli();
+            System.out.print(String.format("%s MintTo api (%.2fs)", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
+            long queryStart = Instant.now().toEpochMilli();
             long queryCount = 0;
             while (true) {
                 queryCount += 1;
@@ -328,10 +328,10 @@ public class End2End {
                     duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
                     callTime = Instant.now().toEpochMilli() - callTime;
                     mintStats.setValues(duration / 1000);
-                    System.out.println(", complete (" + duration / 1000 + "), user api get call (" + callTime / 1000 + "), queryCount (" + queryCount + ")");
+                    System.out.println(", complete (" + duration / 1000 + "s), user api get call (" + callTime / 1000 + "s), queryCount (" + queryCount + ")");
                     return true;
                 } else if (Instant.now().toEpochMilli() - queryStart > timeout) {
-                    System.out.println(" Timeout after " + timeout / 1000 + " seconds and " + queryCount + " queries");
+                    System.out.println(" Timeout for user " + userName + " minting " + initialBalance + " after " + timeout / 1000 + " seconds and " + queryCount + " queries");
                     mintStats.setValues(100);
                     return false;
                 }
@@ -344,14 +344,15 @@ public class End2End {
 
     private static boolean send(Ed25519PrivateKey privateKey, Ed25519PublicKey publicKey) throws InterruptedException, UnsupportedEncodingException {
         int userToSendTo = random.nextInt(usernames.size());
-        String sendPrimitive = Primitives.sendPrimitive(usernames.get(userToSendTo), privateKey, publicKey);
+        int quantity = random.nextInt(100) + 1;
+        String sendPrimitive = Primitives.sendPrimitive(usernames.get(userToSendTo), privateKey, publicKey, quantity);
         RESTPrimitive restPrimitive = new RESTPrimitive(sendPrimitive);
         Instant startTime = Instant.now();
         long currentBalance = balance(usernames.get(userToSendTo));
         if (postPrimitive(restPrimitive)) {
             float duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
-            System.out.print(String.format("%s Transfer api (%.2f)s", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
-            float queryStart = Instant.now().toEpochMilli();
+            System.out.print(String.format("%s Transfer api (%.2fs)", DATE_TIME_FORMATTER.format(startTime), duration / 1000));
+            long queryStart = Instant.now().toEpochMilli();
             long queryCount = 0;
             while (true) {
                 queryCount += 1;
@@ -361,11 +362,11 @@ public class End2End {
                     duration = Instant.now().toEpochMilli() - startTime.toEpochMilli();
                     callTime = Instant.now().toEpochMilli() - callTime;
                     sendStats.setValues(duration / 1000);
-                    System.out.println(", complete (" + duration / 1000 + "), user api get call (" + callTime / 1000 + "), queryCount (" + queryCount + ")");
+                    System.out.println(", complete (" + duration / 1000 + "s), user api get call (" + callTime / 1000 + "s), queryCount (" + queryCount + ")");
                     return true;
                 } else if (Instant.now().toEpochMilli() - queryStart > timeout) {
                     sendStats.setValues(100);
-                    System.out.println(" Timeout after " + timeout / 1000 + " seconds and " + queryCount + " queries");
+                    System.out.println(" Timeout from " + publicKey + " to " + usernames.get(userToSendTo) + " transferring " + quantity + " after " + timeout / 1000 + " seconds and " + queryCount + " queries");
                     return false;
                 }
             }

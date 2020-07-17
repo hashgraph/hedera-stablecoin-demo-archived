@@ -28,11 +28,11 @@ public class Primitives {
         return Base64.getEncoder().encodeToString(primitive.build().toByteArray());
     }
 
-    public static String sendPrimitive(String toAddress, Ed25519PrivateKey privateKey, Ed25519PublicKey publicKey) throws UnsupportedEncodingException {
+    public static String sendPrimitive(String toAddress, Ed25519PrivateKey privateKey, Ed25519PublicKey publicKey, int quantity) throws UnsupportedEncodingException {
 
         Transfer.Builder transfer = Transfer.newBuilder()
                 .setToAddress(toAddress)
-                .setQuantity(random.nextInt(100) + 1);
+                .setQuantity(quantity);
 
         Primitive.Builder primitive = Primitive.newBuilder()
                 .setHeader(primitiveHeader(privateKey, transfer.build().toByteArray(), publicKey.toString()))
