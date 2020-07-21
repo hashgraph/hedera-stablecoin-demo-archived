@@ -4,7 +4,9 @@ import com.hedera.hashgraph.sdk.crypto.ed25519.Ed25519PrivateKey;
 import com.hedera.hashgraph.sdk.crypto.ed25519.Ed25519PublicKey;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Random;
 
 public class FileGen implements Runnable {
@@ -25,27 +27,54 @@ public class FileGen implements Runnable {
             PrintWriter burnPrintWriter = new PrintWriter(burnFileWriter);
             FileWriter sendFileWriter = new FileWriter("stabl-test/send_" + fileSuffix + ".csv");
             PrintWriter sendPrintWriter = new PrintWriter(sendFileWriter);
+            FileWriter mixFileWriter = new FileWriter("stabl-test/mix_" + fileSuffix + ".csv");
+            PrintWriter mixPrintWriter = new PrintWriter(mixFileWriter);
 
-            for (long i = 0; i < iterations; i++) {
+            String[] users = new String[iterations];
+            Ed25519PrivateKey[] privateKeys = new Ed25519PrivateKey[iterations];
+
+            System.out.println("Generating user names and keys");
+            for (int i = 0; i < iterations; i++) {
+                users[i] = fileSuffix + "_user_" + i;
+                privateKeys[i] = Ed25519PrivateKey.generate();
+            }
+
+            for (int i = 0; i < iterations; i++) {
                 if ((i % modulo) == 0) {
                     System.out.println(fileSuffix + "-" + i + ".");
                 }
-                Ed25519PrivateKey privateKey = Ed25519PrivateKey.generate();
-                Ed25519PublicKey publicKey = privateKey.publicKey;
-                joinPrintWriter.println(publicKey.toString() + "," + fileSuffix + "_user_" + i);
-                buyPrintWriter.println(fileSuffix + "_user_" + i + "," + (10_000 + random.nextInt(10_000)));
-                burnPrintWriter.println(Primitives.burnPrimitive(privateKey, publicKey));
-                String toAddress = fileSuffix + "_user_" + random.nextInt(iterations);
+                joinPrintWriter.println(privateKeys[i].publicKey.toString() + "," + users[i]);
+                buyPrintWriter.println(users[i] + "," + (10_000 + random.nextInt(10_000)));
+                burnPrintWriter.println(Primitives.burnPrimitive(privateKeys[i], privateKeys[i].publicKey));
+
+                String toAddress = users[random.nextInt(iterations)];
                 int quantity = random.nextInt(100) + 1;
-                sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKey, publicKey, quantity));
+                sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKeys[i], privateKeys[i].publicKey, quantity));
+
+                //operation, key,user,amount,primitive
+                String lineFormat = "%s,%s,%s,%d,%s";
+                String join = String.format(lineFormat, "j", privateKeys[i].publicKey.toString(), users[i], 0, "");
+                mixPrintWriter.println(join);
+                String mint = String.format(lineFormat, "m", "", users[i], (10_000 + random.nextInt(10_000)), "");
+                mixPrintWriter.println(mint);
+
+                for (int transferIndex = 0; transferIndex < 9; transferIndex++) {
+                    toAddress = users[random.nextInt(iterations)];
+                    String sendPrimitive = Primitives.sendPrimitive(toAddress, privateKeys[i], privateKeys[i].publicKey, random.nextInt(100) + 1);
+                    String transfer = String.format(lineFormat, "t", "", "", 0, sendPrimitive);
+                    mixPrintWriter.println(transfer);
+                }
             }
             joinPrintWriter.close();
             buyPrintWriter.close();
             burnPrintWriter.close();
             sendPrintWriter.close();
-            System.out.println();
-        } catch (Exception e) {
+            mixPrintWriter.close();
+            System.out.println("");
+        } catch (UnsupportedEncodingException e) {
             System.out.println(e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

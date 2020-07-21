@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package com.hedera.mirror.api.proto;
+
+option java_multiple_files = true; // Required for the reactor-grpc generator to work correctly
+option java_package = "com.hedera.mirror.api.proto";
+
+/* Unique identifier for a topic (used by the consensus service) */
+message TopicID {
+    int64 shardNum = 1; // The shard number (nonnegative)
+    int64 realmNum = 2; // The realm number (nonnegative)
+    int64 topicNum = 3; // Unique topic identifier within a realm (nonnegative).
+}
+
+message Timestamp {
+    int64 seconds = 1; // Number of complete seconds since the start of the epoch
+    int32 nanos = 2; // Number of nanoseconds since the start of the last second
+}
+
+// These messages are purely for mirror simulation purposes
+message ConsensusTopicQuery {
+    TopicID topicID = 1; // A required topic ID to retrieve messages for.
+
+    // Include messages which reached consensus on or after this time. Defaults to current time if not set.
+    Timestamp consensusStartTime = 2;
+
+    // Include messages which reached consensus before this time. If not set it will receive indefinitely.
+    Timestamp consensusEndTime = 3;
+
+    // The maximum number of messages to receive before stopping. If not set or set to zero it will return messages
+    // indefinitely.
+    uint64 limit = 4;
+}
+
+message ConsensusTopicResponse {
+    Timestamp consensusTimestamp = 1; // The time at which the transaction reached consensus
+
+    // The message body originally in the ConsensusSubmitMessageTransactionBody. Message size will be less than 6KiB.
+    bytes message = 2;
+
+    bytes runningHash = 3; // The running hash (SHA384) of every message.
+
+    uint64 sequenceNumber = 4; // Starts at 1 for first submitted message. Incremented on each submitted message.
+
+    uint64 runningHashVersion = 5; // Version of the SHA-384 digest used to update the running hash.
+}
+
+//
+// The Mirror Service provides the ability to query a stream of Hedera Consensus Service (HCS) messages for an
+// HCS Topic via a specific (possibly open-ended) time range.
+//
+service ConsensusService {
+    rpc subscribeTopic (ConsensusTopicQuery) returns (stream ConsensusTopicResponse);
+}
