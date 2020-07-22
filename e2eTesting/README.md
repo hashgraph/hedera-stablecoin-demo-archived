@@ -177,7 +177,7 @@ JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Send.jmx -j meter.log -Jip=RESTIP -Jpor
 
 JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Burn.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
 
-JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Mix.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jloops_send=100 -Jthreads=50 -Jthreads_send=500 -Jtps=1000
+JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Mix.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jloops_send=100 -Jthreads=5 -Jthreads_send=50 -Jtps=1000
 ```
 
 *Note the additional parameters on the last `Mix.jmx` test, `loops_send` and `threads_send` set the number of loops and threads for transfer operations independently of `join` and `buy` operations, this enables you to create a greater number of transfer operations than join and buy if desired.
