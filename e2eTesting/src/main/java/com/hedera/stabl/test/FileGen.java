@@ -27,8 +27,12 @@ public class FileGen implements Runnable {
             PrintWriter burnPrintWriter = new PrintWriter(burnFileWriter);
             FileWriter sendFileWriter = new FileWriter("stabl-test/send_" + fileSuffix + ".csv");
             PrintWriter sendPrintWriter = new PrintWriter(sendFileWriter);
-            FileWriter mixFileWriter = new FileWriter("stabl-test/mix_" + fileSuffix + ".csv");
-            PrintWriter mixPrintWriter = new PrintWriter(mixFileWriter);
+//            FileWriter mixJoinFileWriter = new FileWriter("stabl-test/mix-join_" + fileSuffix + ".csv");
+//            PrintWriter mixJoinPrintWriter = new PrintWriter(mixJoinFileWriter);
+//            FileWriter mixMintFileWriter = new FileWriter("stabl-test/mix-mint_" + fileSuffix + ".csv");
+//            PrintWriter mixMintPrintWriter = new PrintWriter(mixMintFileWriter);
+//            FileWriter mixTransferFileWriter = new FileWriter("stabl-test/mix-transfer_" + fileSuffix + ".csv");
+//            PrintWriter mixTransferPrintWriter = new PrintWriter(mixTransferFileWriter);
 
             String[] users = new String[iterations];
             Ed25519PrivateKey[] privateKeys = new Ed25519PrivateKey[iterations];
@@ -41,37 +45,37 @@ public class FileGen implements Runnable {
                 privateKeys[i] = Ed25519PrivateKey.generate();
 
                 joinPrintWriter.println(privateKeys[i].publicKey.toString() + "," + users[i]);
-                buyPrintWriter.println(users[i] + "," + (10_000 + random.nextInt(10_000)));
+                buyPrintWriter.println(users[i] + "," + (100_000 + random.nextInt(10_000)));
                 burnPrintWriter.println(Primitives.burnPrimitive(privateKeys[i], privateKeys[i].publicKey));
 
-                String toAddress = fileSuffix + "_user_" + random.nextInt(iterations);
-                int quantity = random.nextInt(100) + 1;
-                sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKeys[i], privateKeys[i].publicKey, quantity));
-
-                //operation, key,user,amount,primitive
-                String lineFormat = "%s,%s,%s,%d,%s";
-                String join = String.format(lineFormat, "j", privateKeys[i].publicKey.toString(), users[i], 0, "");
-                mixPrintWriter.println(join);
-
-                if (i >= 5) { // start minting five users ago
-                    String mint = String.format(lineFormat, "m", "", users[i-5], (10_000 + random.nextInt(10_000)), "");
-                    mixPrintWriter.println(mint);
-                }
-                if (i >= 10) { // no point transferring to self, need some users to transfer to
-                    for (int transferIndex = 0; transferIndex < 9; transferIndex++) {
-                        toAddress = users[random.nextInt(i-9)]; // randomly pick a user from the already created users
-                        Ed25519PrivateKey fromPrivateKey = privateKeys[i-10]; // transfer from ten users ago
-                        String sendPrimitive = Primitives.sendPrimitive(toAddress, fromPrivateKey, fromPrivateKey.publicKey, random.nextInt(100) + 1);
-                        String transfer = String.format(lineFormat, "t", "", "", 0, sendPrimitive);
-                        mixPrintWriter.println(transfer);
+                if (i >= 10) {
+                    for (int xferCount = 0; xferCount < 10; xferCount++) {
+                        String toAddress = users[random.nextInt(i - 1)]; // target any of the previously created users
+                        int quantity = random.nextInt(10) + 1;
+                        sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKeys[i], privateKeys[i].publicKey, quantity));
                     }
                 }
+//                mixPrintWriter.println(join);
+
+//                if (i >= 5) { // start minting five users ago
+//                    String mint = String.format(lineFormat, "m", "", users[i-5], (10_000 + random.nextInt(10_000)), "");
+//                    mixPrintWriter.println(mint);
+//                }
+//                if (i >= 10) { // no point transferring to self, need some users to transfer to
+//                    for (int transferIndex = 0; transferIndex < 9; transferIndex++) {
+//                        toAddress = users[random.nextInt(i-9)]; // randomly pick a user from the already created users
+//                        Ed25519PrivateKey fromPrivateKey = privateKeys[i-10]; // transfer from ten users ago
+//                        String sendPrimitive = Primitives.sendPrimitive(toAddress, fromPrivateKey, fromPrivateKey.publicKey, random.nextInt(100) + 1);
+//                        String transfer = String.format(lineFormat, "t", "", "", 0, sendPrimitive);
+//                        mixPrintWriter.println(transfer);
+//                    }
+//                }
             }
             joinPrintWriter.close();
             buyPrintWriter.close();
             burnPrintWriter.close();
             sendPrintWriter.close();
-            mixPrintWriter.close();
+//            mixPrintWriter.close();
             System.out.println("");
         } catch (UnsupportedEncodingException e) {
             System.out.println(e.getMessage());
