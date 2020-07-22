@@ -100,7 +100,7 @@ cd hedera-stable-coin-demo/e2eTesting
 
 ### jMeter test data
 
-The `~/hedera-stable-coin-demo/e2eTesting/stabl-test` folder contains a few JMeter scripts that can be used to perform tests on Join (`Join.jmx`), Buy (`Buy.jmx`), Redeem (`Burn.jmx`) and Send (`Send.jmx`) operations.
+The `~/hedera-stable-coin-demo/e2eTesting/stabl-test` folder contains a few JMeter scripts that can be used to perform tests on Join (`Join.jmx`), Buy (`Buy.jmx`), Redeem (`Burn.jmx`), Send (`Send.jmx`) and a mixture (`Mix.jmx`) of operations.
 
 Each of these scripts takes data from csv files and runs 10 concurrent load processes.
 When running jMeter it’s possible to specify how many threads each process should run in parallel, along with the number of loops (or rows) each thread in each process should process.
@@ -111,18 +111,20 @@ Calculations:
 
 *Note: it is essential that the csv files contain at least as many operations as specified by the above calculation, otherwise, the threads will stop at the end of the file leading to a lower number of operations than expected.*
 
+*Note: the `send` csv files will contain 10 times as many rows as the others to support the `Mix.jmx` script testing.
+
 #### JMeter csv file generation
 
 In order to successfully run the jMeter tests, a number of CSV files need to be prepared in advance. These contain data that is used by each of the tests to create a JSON payload to send to the REST API.
 
 A utility is provided to build these files, when the utility is run, any csv files in the stabl-test folder are replaced with the newly generated files.
 
-The utility takes an optional command line parameter to specify the number of lines each csv file should contain (the greater the number of lines, the longer it will take to generate the files). If no parameter is specified, the utility will generate 1 million rows in each file.
+The utility takes an optional command line parameter to specify the number of lines each csv file should contain (the greater the number of lines, the longer it will take to generate the files). If no parameter is specified, the utility will generate 1 million rows in each file (10 million in send csv files).
 
 *Note: The number of lines in the files doesn’t drive the quantity of data sent to the REST API, this is specified through the threads and loops parameters of the jMeter application. However care must be taken to ensure the files contain sufficient rows.*
 
 The utility generates four types of files, `join_x.csv`, `buy_x.csv`, `send_x.csv` and `burn_x.csv`.
-For each type of file, ten files are created, they are named `join_a.csv`, `join_b.csv`, …, `join_j.csv` (likewise for the other file types). Each process within the jMeter `.jmx` files uses one of these files.
+For each type of file, ten files are created, they are named `join_a.csv`, `join_b.csv`, …, `join_j.csv` (likewise for the other file types). Each process within the jMeter `.jmx` files uses one of these files (the `Mix.jmx` uses join, buy and send).
 
 Consequently, if each file contains 1M rows, there is enough data in 10 files to generate 10M operations in a single script run.
 
@@ -174,9 +176,14 @@ JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Buy.jmx -j meter.log -Jip=RESTIP -Jport
 JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Send.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
 
 JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Burn.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
+
+JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Mix.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jloops_send=100 -Jthreads=50 -Jthreads_send=500 -Jtps=1000
 ```
 
+*Note the additional parameters on the last `Mix.jmx` test, `loops_send` and `threads_send` set the number of loops and threads for transfer operations independently of `join` and `buy` operations, this enables you to create a greater number of transfer operations than join and buy if desired.
+
 It is best to run `Join`, then `Buy`. From there `Send` or `Burn` can be run. Indeed, running `Send` just after `Join` will result in 100% failures since the STABL accounts are initialised with 0 STABL tokens.
+Or, running `Mix` will run a mixture of all operations (except `Burn`).
 
 While the test is running, the mirror subscriber outputs performance statistics.
 *Note: these are reset every time the subscriber is restarted and output every 2000 operations.*
@@ -225,6 +232,7 @@ The following files will contain operations that failed (response 500 from the a
 * `errors-buy.log`
 * `errors-send.log`
 * `errors-burn.log`
+* `errors-mix.log`
 
 ## Testing for latency
 
