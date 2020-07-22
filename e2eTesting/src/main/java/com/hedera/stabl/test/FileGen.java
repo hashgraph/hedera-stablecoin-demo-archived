@@ -33,21 +33,18 @@ public class FileGen implements Runnable {
             String[] users = new String[iterations];
             Ed25519PrivateKey[] privateKeys = new Ed25519PrivateKey[iterations];
 
-            System.out.println("Generating user names and keys");
-            for (int i = 0; i < iterations; i++) {
-                users[i] = fileSuffix + "_user_" + i;
-                privateKeys[i] = Ed25519PrivateKey.generate();
-            }
-
             for (int i = 0; i < iterations; i++) {
                 if ((i % modulo) == 0) {
                     System.out.println(fileSuffix + "-" + i + ".");
                 }
+                users[i] = fileSuffix + "_user_" + i;
+                privateKeys[i] = Ed25519PrivateKey.generate();
+
                 joinPrintWriter.println(privateKeys[i].publicKey.toString() + "," + users[i]);
                 buyPrintWriter.println(users[i] + "," + (10_000 + random.nextInt(10_000)));
                 burnPrintWriter.println(Primitives.burnPrimitive(privateKeys[i], privateKeys[i].publicKey));
 
-                String toAddress = users[random.nextInt(iterations)];
+                String toAddress = fileSuffix + "_user_" + random.nextInt(iterations);
                 int quantity = random.nextInt(100) + 1;
                 sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKeys[i], privateKeys[i].publicKey, quantity));
 
