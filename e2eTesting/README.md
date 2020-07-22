@@ -180,6 +180,8 @@ JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Burn.jmx -j meter.log -Jip=RESTIP -Jpor
 JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Mix.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jloops_send=100 -Jthreads=5 -Jthreads_send=50 -Jtps=1000
 ```
 
+(The above are examples only, higher TPS might require a greater number of overall threads.)
+
 *Note the additional parameters on the last `Mix.jmx` test, `loops_send` and `threads_send` set the number of loops and threads for transfer operations independently of `join` and `buy` operations, this enables you to create a greater number of transfer operations than join and buy if desired.
 
 It is best to run `Join`, then `Buy`. From there `Send` or `Burn` can be run. Indeed, running `Send` just after `Join` will result in 100% failures since the STABL accounts are initialised with 0 STABL tokens.
