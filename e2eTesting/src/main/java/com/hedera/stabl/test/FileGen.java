@@ -55,13 +55,16 @@ public class FileGen implements Runnable {
                 String lineFormat = "%s,%s,%s,%d,%s";
                 String join = String.format(lineFormat, "j", privateKeys[i].publicKey.toString(), users[i], 0, "");
                 mixPrintWriter.println(join);
-                String mint = String.format(lineFormat, "m", "", users[i], (10_000 + random.nextInt(10_000)), "");
-                mixPrintWriter.println(mint);
 
-                if (i > 2) { // no point transferring to self, need some users to transfer to
+                if (i >= 5) { // start minting five users ago
+                    String mint = String.format(lineFormat, "m", "", users[i-5], (10_000 + random.nextInt(10_000)), "");
+                    mixPrintWriter.println(mint);
+                }
+                if (i >= 10) { // no point transferring to self, need some users to transfer to
                     for (int transferIndex = 0; transferIndex < 9; transferIndex++) {
-                        toAddress = users[random.nextInt(i)];
-                        String sendPrimitive = Primitives.sendPrimitive(toAddress, privateKeys[i], privateKeys[i].publicKey, random.nextInt(100) + 1);
+                        toAddress = users[random.nextInt(i-9)]; // randomly pick a user from the already created users
+                        Ed25519PrivateKey fromPrivateKey = privateKeys[i-10]; // transfer from ten users ago
+                        String sendPrimitive = Primitives.sendPrimitive(toAddress, fromPrivateKey, fromPrivateKey.publicKey, random.nextInt(100) + 1);
                         String transfer = String.format(lineFormat, "t", "", "", 0, sendPrimitive);
                         mixPrintWriter.println(transfer);
                     }
