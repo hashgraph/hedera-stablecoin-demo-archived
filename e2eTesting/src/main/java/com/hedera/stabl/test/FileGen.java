@@ -45,14 +45,17 @@ public class FileGen implements Runnable {
                 privateKeys[i] = Ed25519PrivateKey.generate();
 
                 joinPrintWriter.println(privateKeys[i].publicKey.toString() + "," + users[i]);
-                buyPrintWriter.println(users[i] + "," + (100_000 + random.nextInt(10_000)));
+                buyPrintWriter.println(users[i] + "," + (100_000 + random.nextInt(100_000)));
                 burnPrintWriter.println(Primitives.burnPrimitive(privateKeys[i], privateKeys[i].publicKey));
 
                 if (i >= 10) {
-                    for (int xferCount = 0; xferCount < 10; xferCount++) {
-                        String toAddress = users[random.nextInt(i - 1)]; // target any of the previously created users
+                    for (int xferCount = 0; xferCount < 100; xferCount++) {
+                        // randomly pick to/from
+                        int midpoint = i / 2;
+                        String toAddress = users[random.nextInt(midpoint)]; // target any of the previously created users
+                        int toIndex = random.nextInt(midpoint) + midpoint;
                         int quantity = random.nextInt(10) + 1;
-                        sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKeys[i], privateKeys[i].publicKey, quantity));
+                        sendPrintWriter.println(Primitives.sendPrimitive(toAddress, privateKeys[toIndex], privateKeys[toIndex].publicKey, quantity));
                     }
                 }
 //                mixPrintWriter.println(join);
