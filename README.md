@@ -42,6 +42,10 @@ In this example, all components have been co-located into a single server, it is
 
 *Note: This specification is likely oversize, however lower GCP specifications result in lower network throughput and lower disk IOPS* 
 
+## Networking and firewalls
+
+The Hedera API and mirror node subscription API use ports 50211 and 5600 respectively. Make sure your server is able to connect to Hedera resources over these ports.
+
 ## Docker compose
 
 A docker compose file enables you to quickly get the solution up and running. 
@@ -171,13 +175,12 @@ Also edit `/etc/postgresql/12/main/postgresql.conf`
 
 ```shell script
 # backup the original file
-sudo nano cp sudo nano /etc/postgresql/12/main/postgresql.conf sudo nano /etc/postgresql/12/main/postgresql.conf.installed
+sudo cp /etc/postgresql/12/main/postgresql.conf /etc/postgresql/12/main/postgresql.conf.installed
 
 sudo nano /etc/postgresql/12/main/postgresql.conf
 ```
 
 with the contents of the `postgresql.conf` file in this repository.
-
 If you prefer to use your own configuration, ensure that the port the PostgreSQL server is listening to is `5432` (port = 5432). 
 
 Finally, restart the database server to ensure all changes are taken into account
@@ -289,30 +292,20 @@ MIRROR_API_LOG=WARN # mirror/api/
 #### Run the REST API
 
 ```shell script
-export GIN_MODE=release
 go run ./api
 ```
 
-> If all is well, the following output should show on screen after go has downloaded the necessary dependencies
-
-```shell script
-⇨ http server started on [::]:3128
-```
+> If all is well, go should download a number of dependencies and run the api server without showing errors.
 
 You can now `CTRL+C` to stop the REST api for now.
 
 #### Run the mirror subscriber
 
 ```shell script
-export GIN_MODE=release
 go run ./mirror
 ```
 
-> The following output should show on screen after go has downloaded the necessary dependencies
-
-```text
-Secs, Count, AvgTPS, BlockTPS, BlockSecs (BlockSize 2000)
-```
+> If all is well, go should download a number of dependencies and run the mirror subscriber without showing errors.
 
 You can now `CTRL+C` to stop the mirror subscriber for now.
 
@@ -340,10 +333,10 @@ Type `.exit` to exit the node command line
 
 #### Configure the UI environemnt
 
-Ensure that `config/dev.env.js` and `config/prod.env.js` (if applicable) are configured properly:
+Ensure that `~/hedera-stable-coin-demo/ui/config/dev.env.js` and `~/hedera-stable-coin-demo/ui/config/prod.env.js` (if applicable) are configured properly:
 
-`POST_PORT: '3128'` must match the `PORT=3128` specified in the `.env` file earlier in this document
 `GET_PORT: '3129'` must match the `MIRROR_PORT=3129` specified in the `.env` file earlier in this document  
+`POST_PORT: '3128'` must match the `PORT=3128` specified in the `.env` file earlier in this document
   
 #### Install compiler tools
 
@@ -386,13 +379,13 @@ To test the UI end to end, all components must be up and running, open an ssh co
 **Terminal 1 – REST API**
 
 ```shell script
-cd ~/hedera-stable-coin-demo; export GIN_MODE=release; go run ./api
+cd ~/hedera-stable-coin-demo; go run ./api
 ```
 
 **Terminal 2 – Mirror subscriber**
 
 ```shell script
-cd ~/hedera-stable-coin-demo; export GIN_MODE=release; go run ./mirror
+cd ~/hedera-stable-coin-demo; go run ./mirror
 ```
 
 **Terminal 3 – UI Server**
