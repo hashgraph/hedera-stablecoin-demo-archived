@@ -177,15 +177,15 @@ Note: 50 threads should be capable of 3500+ TPS
 ```shell script
 cd ~/hedera-stable-coin-demo/e2eTesting/stabl-test
 
-JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Join.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
+JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -n -t Join.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
 
-JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Buy.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
+JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -n -t Buy.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
 
-JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Send.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
+JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -n -t Send.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
 
-JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Burn.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
+JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -n -t Burn.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jthreads=50 -Jtps=1000
 
-JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -t Mix.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jloops_send=100 -Jthreads=5 -Jthreads_send=50 -Jtps=1000
+JVM_ARGS='-Xms2048m -Xmx2048m' jmeter -n -t Mix.jmx -j meter.log -Jip=RESTIP -Jport=RESTPORT -Jloops=10 -Jloops_send=100 -Jthreads=5 -Jthreads_send=50 -Jtps=1000
 ```
 
 (The above are examples only, higher TPS might require a greater number of overall threads.)
