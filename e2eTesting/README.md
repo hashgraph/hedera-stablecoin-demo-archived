@@ -113,6 +113,10 @@ To help with calculations, an Excel spreadsheet is available in this repository:
 
 ![Register](assets/images/calc.png)
 
+You may edit any of the salmon colored cells (`IPAddress`, `Port`, `loops` for Join/Mint and send, `threads` for join/mint and send as well as `TPS`), the grey cells are calculated automatically
+Below the calculations you will find the commands necessary to generate the necessary test data (note, if you already have test data in excess of the `rows needed in one file`, there is no need to re-generate the test data), as well as the commands necessary to run the various tests.
+As you edit the various cells, keep an eye on `send * join` which is the ratio of send operations to join operations, this must not exceed 200.
+
 *Note: it is essential that the csv files contain at least as many operations as specified by the above calculation, otherwise, the threads will stop at the end of the file leading to a lower number of operations than expected.*
 
 *Note: the `send` csv files will contain 200 times as many rows as the others to support the `Mix.jmx` script testing.
