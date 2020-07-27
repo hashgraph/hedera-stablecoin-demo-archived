@@ -49,7 +49,7 @@ public class FileGen implements Runnable {
                 burnPrintWriter.println(Primitives.burnPrimitive(privateKeys[i], privateKeys[i].publicKey));
 
                 if (i >= 10) {
-                    for (int xferCount = 0; xferCount < 100; xferCount++) {
+                    for (int xferCount = 0; xferCount < 200; xferCount++) {
                         // randomly pick to/from
                         int midpoint = i / 2;
                         String toAddress = users[random.nextInt(midpoint)]; // target any of the previously created users
