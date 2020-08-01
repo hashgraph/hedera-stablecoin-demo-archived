@@ -38,9 +38,7 @@ or [apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 ## Deployment and installation
 
-In this example, all components have been co-located into a single server, it is however possible to separate each component if desired. The server is a n2d-standard-16 Google Compute virtual machine comprising 16 vCPUs and 128Gb of memory with a 2TB SSD hard drive running Debian GNU/Linux 10 (buster).
-
-*Note: This specification is likely oversize, however lower GCP specifications result in lower network throughput and lower disk IOPS* 
+In this example, all components have been co-located into a single server, it is however possible to separate each component if desired. The server is a n2d-highmem-16 Compute virtual machine comprising 16 vCPUs and 128Gb of memory with a 2TB SSD hard drive running Debian GNU/Linux 10 (buster).
 
 ## Networking and firewalls
 
